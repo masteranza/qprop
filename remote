@@ -14,6 +14,8 @@ view=0
 download=0
 clean=0
 kill=0
+# Commits changes in project and it's submodules using git alias
+#
 gitrefresh=0
 # possible options u, ur, urv, r, v, d, c
 proj=""
