@@ -2,16 +2,18 @@
 # V.A. Tulsky, Rostock, 2021 #
 ##--------------------------##
 from __future__ import print_function
+from glob import glob
+import sys
+import os
 from math import *
 import numpy as np
-#import matplotlib
+# import matplotlib
 # matplotlib.use('Agg') #not todisplay plots unless plt.show() used
 import matplotlib.pyplot as plt
 from matplotlib.colors import LogNorm
 import scipy.special
 from pathlib import Path  # To get path to home directory
 home = str(Path.home())
-
 pi = np.pi  # Why not?
 
 
@@ -26,11 +28,19 @@ def Ylm(l, m, theta, phi):
 ##---------------------------------##
 # Choose a folder to take data from #
 ##---------------------------------##
-folder_name = 'long-wavelength'
+
+
+folder_name = sys.argv[1]
 # folder_name = 'excited'
 # folder_name = 'template'
-Ntheta = 301  # should be ODD, should coincide with tsurff.param. If 1, theta=0.5pi taken
-Nphi = 1   # should coincide with tsurff.param
+# should be ODD, should coincide with tsurff.param. If 1, theta=0.5pi taken
+Ntheta = int(sys.argv[2])
+Nphi = int(sys.argv[3])   # should coincide with tsurff.param
+
+if Nphi == 1:
+    polarization = 'xz'
+else:
+    polarization = 'xy'
 
 # folder_name = 'attoclock'
 # folder_name = 'vortex'
@@ -39,6 +49,13 @@ Nphi = 1   # should coincide with tsurff.param
 # Nphi = 120  # should coincide with tsurff.param
 ##---------------------------------##
 path = home+'/Results/'+folder_name+'/'
+
+isurfv_polar_files = glob(path+'is*-polar.dat')
+tsurff_polar_files = glob(path+'ts*-polar.dat')
+
+isurfv_ylm_files = glob(path+'is*-partial.dat')
+tsurff_ylm_files = glob(path+'ts*-partial.dat')
+
 inpFile = 'n1-l0-m0'
 tsurff_method = 'isurfv'  # 'tsurff' or 'isurfv'
 # tsurff_method = 'tsurff'
@@ -47,11 +64,11 @@ tsurff_method = 'isurfv'  # 'tsurff' or 'isurfv'
 ##---------------------------------##
 plot_type = '2D'           # '2D', '1D' or 'angular'
 # plot_type ='angular'
-polarization = 'xz'        # 'xz' or 'xy'
+# polarization = 'xz'        # 'xz' or 'xy'
 # polarization = 'xy'
 m_number = 0               # Only used for 'xz' polarization
 # 'Ylm' or 'polar' # Ylm if data is recorded in lm-amplitudes
-expansion_method = 'polar'
+# expansion_method = 'polar'
 # 'abs' for [ k|a|^2 ] or 'complex' [ Re(a), Im(a) ] data
 data_type = 'abs'
 log_scale = 1              # True or False
@@ -85,26 +102,30 @@ if wrt_energy == True:
 if data_type == 'abs':
     multiply_by_k = False  # Data already in k|a|^2 format
 
-if polarization == 'xz':
-    Nphi = 1  # Spectrum is axial symmetric
+# if polarization == 'xz':
+    # Nphi = 1  # Spectrum is axial symmetric
 
-if Ntheta > 1:
-    if Ntheta % 2 == 0:
-        Ntheta += 1
-        print('Number of theta angles increased by one, as it should be ODD (as in the QPROP code)')
+# if Ntheta > 1:
+#     if Ntheta % 2 == 0:
+#         Ntheta += 1
+#         print('Number of theta angles increased by one, as it should be ODD (as in the QPROP code)')
 
-if expansion_method == 'polar':
-    fname = ("is-" if tsurff_method == "isurfv" else "ts-") + \
-        inpFile + '-polar.dat'
-if expansion_method == 'Ylm':
-    fname = ("is-" if tsurff_method == "isurfv" else "ts-") + \
-        inpFile + '-partial.dat'
+# if expansion_method == 'polar':
+#     fname = ("is-" if tsurff_method == "isurfv" else "ts-") + \
+#         inpFile + '-polar.dat'
+# if expansion_method == 'Ylm':
+#     fname = ("is-" if tsurff_method == "isurfv" else "ts-") + \
+#         inpFile + '-partial.dat'
 
-print('Taking data from', path+fname)
-print('Making', plot_type, 'plot.')
+# print('Taking data from', path+fname)
+# print('Loading: ', isurfv_polar_files[0])
+# print('Making', plot_type, 'plot.')
 
-if expansion_method == 'polar':
-    x = np.loadtxt(path+fname)
+
+def preparePolar(filename):
+    global Nk, ik_max, Energy, K, Theta, Phi, kmax, W
+    print('Preparing polar plot for ', filename)
+    x = np.loadtxt(filename)
     x = np.transpose(x)
     Nk = int(len(x[0])/Ntheta/Nphi)
     ik_max = Nk  # Reduce to truncate data
@@ -124,8 +145,14 @@ if expansion_method == 'polar':
                                     Nphi)[0:ik_max, ::, ::]  # real(a)+j imag(a)
         W = abs(W*W)
     Nk = ik_max
-if expansion_method == 'Ylm':
-    x = np.loadtxt(path+fname)
+    if multiply_by_k == True:
+        W *= K
+
+
+def prepareYlm(filename):
+    global Nk, ik_max, Energy, K, Theta, Phi, kmax, W
+    print('Preparing Ylm plot for ', filename)
+    x = np.loadtxt(filename)
     x = np.transpose(x)
     Nk = len(x[0])
     ik_max = Nk  # Reduce to truncate data
@@ -180,12 +207,16 @@ if expansion_method == 'Ylm':
                 print()
         W = abs(W*W)
     Nk = ik_max
+    if multiply_by_k == True:
+        W *= K
 
-if multiply_by_k == True:
-    W *= K
+
+def fname(filename):
+    return os.path.splitext(os.path.basename(filename))[0]
 
 
-if plot_type == '2D':
+def plot2D(filename):
+    print("Making 2D plot")
     if polarization == 'xz':
         phi_ind = 0
         Angles2D = Theta[::, ::, phi_ind]
@@ -207,10 +238,10 @@ if plot_type == '2D':
     if polar_canvas == True:
         ax = plt.subplot(polar=True)
         if log_scale == True:
-            cplt = ax.pcolor(Angles2D, R, (W2D+1e-100), norm=LogNorm(),
-                             vmin=vmax*10**min_order, vmax=vmax, cmap=cmap)
+            cplt = ax.pcolor(Angles2D, R, (W2D+1e-100), shading='auto',
+                             norm=LogNorm(vmax*10**min_order, vmax), cmap=cmap)
         if log_scale == False:
-            cplt = ax.pcolor(Angles2D, R, (W2D+1e-100),
+            cplt = ax.pcolor(Angles2D, R, (W2D+1e-100), shading='auto',
                              vmin=vmax*10**min_order, vmax=vmax, cmap=cmap)
         if Custom_ticks == True:
             ticks_step = 0.2*ceil(kmax*10)*0.1
@@ -231,10 +262,10 @@ if plot_type == '2D':
             X = Angles2D
             Y = R
         if log_scale == True:
-            cplt = ax.pcolor(X, Y, (W2D+1e-100), norm=LogNorm(),
-                             vmin=vmax*10**min_order, vmax=vmax, cmap=cmap)
+            cplt = ax.pcolor(X, Y, (W2D+1e-100),  # shading='auto',
+                             norm=LogNorm(vmax*10**min_order, vmax), cmap=cmap)
         if log_scale == False:
-            cplt = ax.pcolor(X, Y, (W2D+1e-100),
+            cplt = ax.pcolor(X, Y, (W2D+1e-100), shading='auto',
                              vmin=vmax*10**min_order, vmax=vmax, cmap=cmap)
         if cartesian == True:
             if polarization == 'xz':
@@ -281,9 +312,12 @@ if plot_type == '2D':
 
     cbar.ax.tick_params(labelsize=FONTSIZE)
     cbar.set_label(label="Diff. ioniz. probability (a.u.)", fontsize=FONTSIZE)
-    plt.show()
+    # plt.show()
+    plt.savefig(path+fname(filename)+'.png')
 
-if plot_type == '1D':
+
+def plot1D(filename):
+    print("Making 1D plot")
     phi_angles_ind = [0, Nphi/2]
     for i in range(2):
         if polarization == 'xz':
@@ -309,9 +343,12 @@ if plot_type == '1D':
     plt.yticks(size=FONTSIZE)
     plt.xlabel(xlabel, fontsize=FONTSIZE)
     plt.ylabel(r"Diff. ioniz. probability (a.u.)", fontsize=FONTSIZE)
-    plt.show()
+    # plt.show()
+    plt.savefig(path+fname(filename)+'.png')
 
-if plot_type == 'angular':
+
+def plotAngular():
+    print("Making Angular plot")
     fig = plt.figure()
     ax = plt.subplot()
     if polarization == 'xz':
@@ -339,4 +376,22 @@ if plot_type == 'angular':
             [str(0.5*i)+r"$\pi$" for i in range(0, 5, 1)], fontsize=FONTSIZE)
         plt.xlabel(r"$\varphi$", fontsize=FONTSIZE)
     plt.ylabel("Angular distribution (arb.u.)", fontsize=FONTSIZE)
-    plt.show()
+    # plt.show()
+    plt.savefig(path+fname(filename)+'.png')
+
+
+for filename in isurfv_polar_files:
+    preparePolar(filename)
+    plot2D(filename)
+
+for filename in tsurff_polar_files:
+    preparePolar(filename)
+    plot2D(filename)
+
+for filename in isurfv_ylm_files:
+    prepareYlm(filename)
+    plot2D(filename)
+
+for filename in tsurff_ylm_files:
+    prepareYlm(filename)
+    plot2D(filename)

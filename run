@@ -26,7 +26,13 @@ from="im"
 echo "${INFC}Number of cores = ${GREEN}$cores${INFC} (used for ./im routines, if ${GREEN}value of -np option > 0${INFC} then this value will be used instead).${NC}"
 err_str="${RED}Error:${INFC}"
 suc_str="${GREEN}Success!${NC}"
+before_str="should be passed before options sent to C routines.${NC}"
 err_arg_order="$err_str Arguments passed to 'run' should always go first! (before those to im/re/isurfv/tsurff)${NC}"
+#What to plot
+hhg=0
+laser=0
+pes=0
+wf=0
 
 index=1
 declare -i index
@@ -43,6 +49,10 @@ compiledQ() {
         echo "$err_str binary ${GREEN}$1${INFC} currently not compiled! (hint: you can pass -make $1 or -make all to fix this)${NC}"
         return 1
     fi
+}
+
+getParam() {
+    grep -hr --include=''$1'.param' -e "$3" projects/$2 | awk '{print $3}'
 }
 # Used to preview all the commands called (good for DEBUG)
 # set -x
@@ -63,7 +73,7 @@ while [[ $# -gt 0 && $index -eq $# || $index -lt $# ]]; do
     # echo "$index / $# : ${!index}"
     case "${!index}" in
     --proj* | -proj* | proj*)
-        [[ $index -gt 1 ]] && echo "$err_arg_order -proj found later." && exit 1
+        [[ $index -gt 1 ]] && echo "$err_arg_order -proj $before_str" && exit 1
         proj=$(echo $1 | sed -e 's/^[^=]*=//g')
         if [[ $proj = "" ]]; then
             echo "$err_str Mising value for option proj= / -proj=. Enter it without space!${NC}"
@@ -74,7 +84,7 @@ while [[ $# -gt 0 && $index -eq $# || $index -lt $# ]]; do
         ;;
     --np | -np | --processors)
         shift
-        [[ $index -gt 1 ]] && echo "$err_arg_order -np found later." && exit 1
+        [[ $index -gt 1 ]] && echo "$err_arg_order -np $before_str" && exit 1
         if [[ $1 != "" && $1 != *[^0-9]* ]]; then
             if [ $1 -eq 1 ]; then
                 echo "${BLUE}MPI will not be used.${NC}"
@@ -91,7 +101,7 @@ while [[ $# -gt 0 && $index -eq $# || $index -lt $# ]]; do
         ;;
     --mk | -mk | --make | -make)
         shift
-        [[ $index -gt 1 ]] && echo "$err_arg_order -mk found later." && exit 1
+        [[ $index -gt 1 ]] && echo "$err_arg_order -mk $before_str" && exit 1
         if [[ "$1" = "all" || "$1" = "im" || "$1" = "re" || "$1" = "isurfv" || "$1" = "tsurff" || "$1" = "tsurff-mpi" || "$1" = "clean" ]]; then
             mk=$1
             echo "${PINK}The project will be recompiled with ${GREEN}$mk${PINK}.${NC}"
@@ -102,12 +112,12 @@ while [[ $# -gt 0 && $index -eq $# || $index -lt $# ]]; do
         ;;
     -special | --special)
         shift
-        [[ $index -gt 1 ]] && echo "$err_arg_order -special found later." && exit 1
+        [[ $index -gt 1 ]] && echo "$err_arg_order -special $before_str" && exit 1
         special=1
         ;;
     -from | --from)
         shift
-        [[ $index -gt 1 ]] && echo "$err_arg_order -from found later." && exit 1
+        [[ $index -gt 1 ]] && echo "$err_arg_order -from $before_str" && exit 1
         if [[ "$1" = "re" || "$1" = "isurfv" || "$1" = "tsurff" ]]; then
             from=$1
             echo "${PINK}The project will run from ${GREEN}$from${PINK}.${NC}"
@@ -118,7 +128,7 @@ while [[ $# -gt 0 && $index -eq $# || $index -lt $# ]]; do
         ;;
     -upto | --upto)
         shift
-        [[ $index -gt 1 ]] && echo "$err_arg_order -upto found later." && exit 1
+        [[ $index -gt 1 ]] && echo "$err_arg_order -upto $before_str" && exit 1
         if [[ "$1" = "im" || "$1" = "re" || "$1" = "isurfv" ]]; then
             upto=$1
             echo "${PINK}The project will run upto ${GREEN}$upto${PINK}.${NC}"
@@ -129,16 +139,34 @@ while [[ $# -gt 0 && $index -eq $# || $index -lt $# ]]; do
         ;;
     -dryrun | -dry-run | --dry-run | --dryrun)
         shift
-        [[ $index -gt 1 ]] && echo "$err_arg_order -dryrun found later." && exit 1
+        [[ $index -gt 1 ]] && echo "$err_arg_order -dryrun $before_str" && exit 1
         dryrun=1
         cmd=echo
         ;;
-    -N | --max-n-qnumber) #Hackish but works without spoiling the good args
+    -plot | --plot)
+        shift
+        [[ $index -gt 1 ]] && echo "$err_str -action $before_str" && exit 1
+        # if [[ $1 =~ "u" || $1 =~ "r" || $1 =~ "v" || $1 =~ "d" || $1 =~ "c" || $1 =~ "s" ]]; then
+        if [[ $1 =~ "h" ]]; then
+            hhg=1
+        fi
+        if [[ $1 =~ "l" ]]; then
+            laser=1
+        fi
+        if [[ $1 =~ "p" ]]; then
+            pes=1
+        fi
+        if [[ $1 =~ "w" ]]; then
+            wf=1
+        fi
+        shift
+        ;;
+    -N | --max-n-qnumber)
         index+=1
         opt_maxnqnumber="${!index}"
         index+=1
         ;;
-    -C | --conf_file) #Hackish but works without spoiling the good args
+    -C | --conf_file)
         index+=1
         conf="${!index}"
         index+=1
@@ -156,8 +184,12 @@ else
     echo "$err_str Invalid/Missing value for option -C / --conf_file. File ${RED}$conf${INFC}.param doesn't exist.${NC}" && exit 1
 fi
 
-experiment=$(grep -hr --include=''$conf'.param' -e "exp-name" projects/$proj | awk '{print $3}')
-maxnqnumber=$(grep -hr --include=''$conf'.param' -e "max-n-qnumber" projects/$proj | awk '{print $3}')
+experiment=$(getParam $conf $proj "exp-name")
+# $(grep -hr --include=''$conf'.param' -e "exp-name" projects/$proj | awk '{print $3}')
+maxnqnumber=$(getParam $conf $proj "max-n-qnumber")
+numtheta=$(getParam $conf $proj "num-theta-surff")
+numphi=$(getParam $conf $proj "num-phi-surff")
+
 [[ "$experiment" != "" ]] && echo "${INFC}exp-name is ${GREEN}$experiment${INFC}.${NC}"
 [[ "$maxnqnumber" != "" ]] && echo "${INFC}max-n-qnumber name is ${GREEN}$maxnqnumber${INFC}.${NC}"
 if [ ! -z ${opt_maxnqnumber+x} ]; then
@@ -176,6 +208,14 @@ fi
         fi
     }
 
+#Plot PES
+if [[ $pes = 1 ]]; then
+    cd plots
+    echo "${PINK}Plot PES with ${GREEN}plot_pes.py $proj/$experiment $numtheta $numphi ${NC}"
+    python3 plot_pes.py $proj/$experiment $numtheta $numphi
+    exit 0
+fi
+
 if [[ $proc -gt 0 ]]; then
     cores=$proc
     echo "${INFC}Number of cores = ${GREEN}$cores${INFC}"
@@ -189,8 +229,6 @@ fi
 [[ "$mk" = "clean" ]] && exit 0
 
 #FIXME: LATER
-# [[ [[ "$from" = "tsurff" || "$from" = "isurfv" || "$from" = "re" ]] && "$upto" = "im" ]] && echo "$err_str conflicting -from $from and -upto $upto" && exit 1
-# [[ [[ "$from" = "tsurff" || "$from" = "isurfv" ]] && "$upto" = "re" ]] && echo "$err_str conflicting -from $from and -upto $upto" && exit 1
 [[ "$from" = "tsurff" && "$upto" = "isurfv" ]] && echo "$err_str conflicting -from $from and -upto $upto" && exit 1
 
 if [[ $special = 1 ]]; then
