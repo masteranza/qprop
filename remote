@@ -29,7 +29,8 @@ declare -i index
 host=""
 user="ranza"
 sourceDir="./"
-targetDir="~/qprop"
+targetDir=""
+qpropDir="qprop"
 resultsDir="~/Results"
 resultsLocalDir=~/Results
 gitrepo="git@github.com:masteranza/qprop.git"
@@ -99,7 +100,8 @@ while [[ $# -gt 0 && $index -eq $# || $index -lt $# ]]; do
                 [[ $index -gt 1 ]] && echo "$err_str -targetDir found later." && exit 1
                 targetDir=$(echo $1 | sed -e 's/^[^=]*=//g')
                 if [[ $targetDir = "" ]]; then
-                        echo "$err_str Mising value for option -targetDir=. Enter it without space!${NC}"
+                        echo "${INFC}QPROP will be placed in home directory${NC}"
+                        # echo "$err_str Mising value for option -targetDir=. Enter it without space!${NC}"
                 else
                         echo "${INFC}Setting the tagetDir to: ${GREEN}$targetDir${NC}"
                 fi
@@ -166,7 +168,6 @@ if [[ $gitrefresh = 1 ]]; then
         git submodule foreach 'git add . && git diff-index --quiet HEAD || git commit -m "test change"'
         git add . && git diff-index --quiet HEAD || (git commit -m "auto remote commit" && git push --recurse-submodules=on-demand && echo "${GREEN}Repo pushed from local${NC}")
         # git diff-index --quiet HEAD || (git commit -m "auto remote commit" && git push && echo "${GREEN}Repo pushed from local${NC}")
-        git push --recurse-submodules=on-demand
 fi
 [[ "$host" == "" ]] && echo "$err_str You need to pass host name using -host=hostname${NC}" && exit 1
 #Change username to your own
@@ -174,18 +175,24 @@ address="$user@$host"
 
 if [[ $gitrefresh = 1 ]]; then
         sleep 5
-        ssh $address 'cd '$targetDir'
+        ssh $address 'if [[ '${targetDir}' != "" ]]; then
+                [[ -d '$targetDir' ]] || mkdir -p '$targetDir'
+                cd '$targetDir'
+        fi
+        if [[ -d '$qproptDir' ]]; then
+                cd '$qpropDir'
+        fi
         (git pull && git submodule update --recursive && echo "'${GREEN}'Repo pulled to '${host}${NC}'") || (git clone --recurse-submodules '$gitrepo' && echo "'${GREEN}'Repo cloned to '${host}${NC}'") || (echo "'$err_str' Problem cloning repository'${NC}'" && exit 1)'
 fi
 
 #Exit if no actions passed
-[[ $clean = 0 && $upload = 0 && $run = 0 && $download = 0 && $view = 0 && $kill = 0 ]] && echo "${BLUE}Hint:${INFC} You need to pass an -action u/r/v/d/c/M/D/C to do something :)${NC}" && exit 0
+[[ $clean = 0 && $upload = 0 && $run = 0 && $download = 0 && $view = 0 && $kill = 0 ]] && echo "${BLUE}Hint:${INFC} You need to pass an -action u/r/v/d/c/g to do something :)${NC}" && exit 0
 
 #clean routine
 if [[ $clean = 1 ]]; then
-        read -p "${PINK}Source code will be removed from ${GREEN}$targetDir${PINK} on ${GREEN}$host${PINK}. Press ENTER to continue.${NC}"
-        echo "ssh $address 'rm -rf $targetDir'"
-        ssh $address 'rm -rf '$targetDir''
+        read -p "${PINK}Source code will be removed from ${GREEN}${targetDir}/${qpropDir}${PINK} on ${GREEN}$host${PINK}. Press ENTER to continue.${NC}"
+        echo "ssh $address 'rm -rf $targetDir/$qpropDir'"
+        ssh $address 'rm -rf '$targetDir/$qpropDir''
 fi
 
 #kill routine
@@ -197,27 +204,34 @@ fi
 
 #UPLOAD routine
 if [[ $upload = 1 ]]; then
-        if (test -f "${host}.conf"); then
-                custompath=$(<"${host}.conf")
+        if (test -f "conf/${host}.conf"); then
+                custompath=$(<"conf/${host}.conf")
         else
                 custompath=""
         fi
-        rsync $custompath -avhr --dry-run --exclude='.vscode' --exclude='lib' --exclude='.git' --exclude='.DS_Store' --exclude='*.o' --exclude='*.a' --exclude='*.dat' --exclude='*.log' --exclude='im' --exclude='re' --exclude='isurfv' --exclude='tsurff' --exclude='tsurff-mpi' $sourceDir $address:$targetDir
+        #Create any directories if needed
+        ssh $address 'if [[ '${targetDir}' != "" ]]; then
+                [[ -d '$targetDir' ]] || mkdir -p '$targetDir'
+        fi'
+        #Dry-run
+        rsync $custompath -avhr --dry-run --exclude='.vscode' --exclude='lib' --exclude='.git' --exclude='.DS_Store' --exclude='*.o' --exclude='*.a' --exclude='*.dat' --exclude='*.log' --exclude='im' --exclude='re' --exclude='isurfv' --exclude='tsurff' --exclude='tsurff-mpi' $sourceDir $address:$targetDir/$qpropDir
+        #Ask
         read -p "${PINK}This  will be ${GREEN}uploaded${PINK} to ${GREEN}$host${PINK}. Press ENTER to continue.${NC}"
-        rsync $custompath -avhr --exclude='.git' --exclude='.git/*' --exclude='.DS_Store' --exclude='*.o' --exclude='*.a' --exclude='*.dat' --exclude='*.log' --exclude='im' --exclude='re' --exclude='isurfv' --exclude='tsurff' --exclude='tsurff-mpi' $sourceDir $address:$targetDir
+        #Upload
+        rsync $custompath -avhr --exclude='.git' --exclude='.git/*' --exclude='.DS_Store' --exclude='*.o' --exclude='*.a' --exclude='*.dat' --exclude='*.log' --exclude='im' --exclude='re' --exclude='isurfv' --exclude='tsurff' --exclude='tsurff-mpi' $sourceDir $address:$targetDir/$qpropDir
 
 fi
 
 #Check if we need to continue
 [[ $run = 0 && $download = 0 && $view = 0 ]] && exit 0
 
-[[ "$proj" == "" ]] && echo "$err_str  You need to pass project name using -proj=projectname.${NC}" && exit 1
+[[ "$proj" = "" ]] && echo "$err_str  You need to pass project name using -proj=projectname.${NC}" && exit 1
 
 [[ $dryrun -eq 1 ]] && echo "${BLUE}Dry-run will be enabled on remote execution${NC}."
 
 if [[ $run = 1 ]]; then
         read -p "${PINK}About to ${GREEN}run${PINK} \"./run $@\" on $host${PINK}. If not sure, try -dryrun first. Press ENTER to continue.${NC}"
-        ssh $address 'cd '$targetDir'; ./bk ./run '$@';'
+        ssh $address 'cd '$targetDir/$qpropDir'; ./bk ./run '$@';'
 fi
 
 experiment=$(grep -hr --include=''$conf'.param' -e "exp-name" projects/$proj | awk '{print $3}')
@@ -259,7 +273,7 @@ if [[ $view = 1 ]]; then
                 top -bn1 -c -w512 -u '$user' | egrep "im|re|isurfv|tsurff" | grep -v "grep"
         fi
         eval resultsDir='$resultsDir'
-        eval targetDir='$targetDir'
+        eval targetDir='$targetDir/$qpropDir'
 
         if [ ! -d "$resultsDir/'$proj'/'$expFolder'" ]; then
                 echo "'$err_str' Results directory '${GREEN}'$resultsDir/'$proj'/'$expFolder${INFC}' does not exist on server '${GREEN}$host${NC}'." 
@@ -320,12 +334,12 @@ if [[ $view = 1 ]]; then
         fi
 
         if [ ! -d "$targetDir" ]; then
-                echo "'$err_str' targetDir directory '${GREEN}'$targetDir'${INFC}' does not exist on server '${GREEN}$host${NC}'." 
+                echo "'$err_str' directory '${GREEN}'$targetDir'${INFC}' does not exist on server '${GREEN}$host${NC}'." 
                 exit 0
         fi
 
         echo -e "\n'${RED}'RUNNER LOGS:'${NC}'"
-        cd '$targetDir'
+        cd $targetDir
         find . -type f -name "run*.log" | while read i
         do 
                 echo "'${BLUE}'File: $i'${NC}'" 
