@@ -16,6 +16,7 @@
 // If you pass your args like this
 // ./im 3.1 4.1 -Z 1 they will get reordered to ./im -Z 1 3.1 4.1
 // which looks ok, but the correct order might not be guaranteed in the custom args or it may cause errors
+// The function processCustomOptions will get only your custom options, which means 3.1 4.1 (in the example above)
 void processCustomOptions(int argc, char *argv[])
 {
   for (int i = 0; i < argc; i++)
