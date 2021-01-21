@@ -13,9 +13,13 @@ run=0
 view=0
 download=0
 clean=0
+# Used to kill processes by $user
 kill=0
-# Commits changes in project and it's submodules using git alias
-#
+# Used to develop QPROP to commits changes in project and it's submodules
+# to print the names of all submodules use
+# git config --file .gitmodules --get-regexp path | awk '{ print $2 }'
+# or
+# git submodule--helper list
 gitrefresh=0
 # possible options u, ur, urv, r, v, d, c
 proj=""
@@ -28,7 +32,7 @@ sourceDir="./"
 targetDir="~/qprop"
 resultsDir="~/Results"
 resultsLocalDir=~/Results
-
+gitrepo="git@github.com:masteranza/qprop.git"
 err_str="${RED}Error:${INFC}"
 suc_str="${GREEN}Success!${NC}"
 err_arg_order="$err_str Arguments passed to 'remote' should always go first! (before those to run or im/re/isurfv/tsurff)"
@@ -159,13 +163,20 @@ while [[ $# -gt 0 && $index -eq $# || $index -lt $# ]]; do
 done
 
 if [[ $gitrefresh = 1 ]]; then
-        git add .
-        git diff-index --quiet HEAD || (git commit -m "auto remote commit" && git push && echo "${GREEN}Repo pushed from local${NC}")
-
+        git submodule foreach 'git add . && git diff-index --quiet HEAD || git commit -m "test change"'
+        git add . && git diff-index --quiet HEAD || (git commit -m "auto remote commit" && git push --recurse-submodules=on-demand && echo "${GREEN}Repo pushed from local${NC}")
+        # git diff-index --quiet HEAD || (git commit -m "auto remote commit" && git push && echo "${GREEN}Repo pushed from local${NC}")
+        git push --recurse-submodules=on-demand
 fi
 [[ "$host" == "" ]] && echo "$err_str You need to pass host name using -host=hostname${NC}" && exit 1
 #Change username to your own
 address="$user@$host"
+
+if [[ $gitrefresh = 1 ]]; then
+        sleep 5
+        ssh $address 'cd '$targetDir'
+        (git pull && git submodule update --recursive && echo "'${GREEN}'Repo pulled to '${host}${NC}'") || (git clone --recurse-submodules '$gitrepo' && echo "'${GREEN}'Repo cloned to '${host}${NC}'") || (echo "'$err_str' Problem cloning repository'${NC}'" && exit 1)'
+fi
 
 #Exit if no actions passed
 [[ $clean = 0 && $upload = 0 && $run = 0 && $download = 0 && $view = 0 && $kill = 0 ]] && echo "${BLUE}Hint:${INFC} You need to pass an -action u/r/v/d/c/M/D/C to do something :)${NC}" && exit 0
@@ -206,16 +217,7 @@ fi
 
 if [[ $run = 1 ]]; then
         read -p "${PINK}About to ${GREEN}run${PINK} \"./run $@\" on $host${PINK}. If not sure, try -dryrun first. Press ENTER to continue.${NC}"
-        if [[ $gitrefresh = 1 ]]; then
-                sleep 5
-                ssh $address 'cd '$targetDir'
-                git pull
-                echo "'${GREEN}'Repo pulled to '${host}${NC}'"
-                ./bk ./run '$@';'
-        else
-                ssh $address 'cd '$targetDir'; ./bk ./run '$@';'
-        fi
-
+        ssh $address 'cd '$targetDir'; ./bk ./run '$@';'
 fi
 
 experiment=$(grep -hr --include=''$conf'.param' -e "exp-name" projects/$proj | awk '{print $3}')
