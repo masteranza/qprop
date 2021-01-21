@@ -175,7 +175,7 @@ address="$user@$host"
 
 if [[ $gitrefresh = 1 ]]; then
         sleep 5
-        ssh $address 'if [[ '${targetDir}' != "" ]]; then
+        ssh $address 'if [[ "'${targetDir}'" != "" ]]; then
                 [[ -d '$targetDir' ]] || mkdir -p '$targetDir'
                 cd '$targetDir'
         fi
