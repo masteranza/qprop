@@ -1,3 +1,6 @@
 [submodule "projects/rydberg-pop"]
 	path = projects/rydberg-pop
 	url = git@github.com:masteranza/qprop-rydberg-pop.git
+[submodule "conf"]
+	path = conf
+	url = git@github.com:masteranza/qprop-conf.git
