@@ -1,5 +1,0 @@
-#!/bin/bash
-# The first argument should be all, clean or one of the routines (im, re, isurfv, tsurff)
-for dir in projects/*; do
-    make proj=${dir##*/} $1
-done

@@ -1,4 +1,4 @@
-include common-variables-for-make.mk
+include main/common-variables-for-make.mk
 #Compile by running make proj=proj_folder_name action
 #example: make proj=hydrogen im
 #If no project is passed 'template' project gets built
@@ -6,24 +6,24 @@ ifeq ($(proj),)
 	proj=template
 endif
 
-options=-DPROJNAME=$(proj) -I. -Iprojects/$(proj) -Ibase -lqprop -lm -Llib/x86_64
+options=-DPROJNAME=$(proj) -Imain -Iprojects/$(proj) -Ibase -lqprop -lm -Llib/x86_64
 
 all: im re isurfv tsurff tsurff-mpi
 
-im : libqprop.a im.cc
-	$(compiler) $(optimargs) im.cc -o projects/$(proj)/im $(options)
+im : libqprop.a main/im.cc
+	$(compiler) $(optimargs) main/im.cc -o projects/$(proj)/im $(options)
 
-re : libqprop.a re.cc
-	$(compiler) $(optimargs) re.cc -o projects/$(proj)/re $(options) $(gslargs) 
+re : libqprop.a main/re.cc
+	$(compiler) $(optimargs) main/re.cc -o projects/$(proj)/re $(options) $(gslargs) 
 
-tsurff : libqprop.a tsurff.cc
-	$(compiler) $(optimargs) tsurff.cc -o projects/$(proj)/tsurff $(gslargs) $(options)
+tsurff : libqprop.a main/tsurff.cc
+	$(compiler) $(optimargs) main/tsurff.cc -o projects/$(proj)/tsurff $(gslargs) $(options)
 
-tsurff-mpi : libqprop.a tsurff.cc
-	$(compiler) $(optimargs) tsurff.cc -o projects/$(proj)/tsurff-mpi $(mpiargs) $(gslargs) $(options)
+tsurff-mpi : libqprop.a main/tsurff.cc
+	$(compiler) $(optimargs) main/tsurff.cc -o projects/$(proj)/tsurff-mpi $(mpiargs) $(gslargs) $(options)
 
-isurfv : libqprop.a isurfv.cc
-	$(compiler) $(optimargs) isurfv.cc -o projects/$(proj)/isurfv $(gslargs) $(options)
+isurfv : libqprop.a main/isurfv.cc
+	$(compiler) $(optimargs) main/isurfv.cc -o projects/$(proj)/isurfv $(gslargs) $(options)
 
 libqprop.a:
 	cd base/ && make 
@@ -35,6 +35,5 @@ clean:
 	rm -f projects/$(proj)/isurfv
 	rm -f projects/$(proj)/tsurff
 	rm -f projects/$(proj)/tsurff-mpi
-	rm -f projects/$(proj)/runner.log
 	cd base/ && make clean
 	rm -f lib/x86_64/libqprop.a

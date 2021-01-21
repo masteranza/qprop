@@ -1,4 +1,4 @@
-include ../common-variables-for-make.mk
+include ../main/common-variables-for-make.mk
 # The option -march=native may allow the compiler to use fancy instructions (SSE, AVX and the like).
 # It also means you have to recompile on each CPU architecture you are using.
 # gxxoptions = $(optimargs) -g -Wno-deprecated  -funroll-all-loops -finline-functions -fexpensive-optimizations  -Xlinker  -defsym -Xlinker MAIN__=main -I.

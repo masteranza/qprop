@@ -110,6 +110,19 @@ while [[ $# -gt 0 && $index -eq $# || $index -lt $# ]]; do
         fi
         shift
         ;;
+    -ctest | --ctest) #Tests whether all projects will compile
+        shift
+        [[ $index -gt 1 ]] && echo "$err_arg_order -mk $before_str" && exit 1
+        if [[ "$1" = "all" || "$1" = "im" || "$1" = "re" || "$1" = "isurfv" || "$1" = "tsurff" || "$1" = "tsurff-mpi" || "$1" = "clean" ]]; then
+            echo "${PINK}Testing compilation of all projects with make ${GREEN}$1${PINK}.${NC}"
+        else
+            echo "$err_str Missing value for option -test / --test. Use all, im, re, isurfv, tsurff or tsurff-mpi.${NC}" && exit 1
+        fi
+        for dir in projects/*; do
+            make proj=${dir##*/} $1
+        done
+        exit 0
+        ;;
     -special | --special)
         shift
         [[ $index -gt 1 ]] && echo "$err_arg_order -special $before_str" && exit 1

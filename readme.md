@@ -28,16 +28,13 @@ Several examples are provided in the `projects/` directory, all of which can be 
 
 where `projectname` is the name of one of the folders inside `projects/`.
 
-Ann additional script called `make-all` can be used to build all the projects at once.
-It takes one argument which is being passed to make.
-
 # Running using 'run' routine
 
 Among the examples you will find a project named `template` which can be used for creating own projects. Let's build & run the `template` project:
 
 `run -make all proj=template`
 
-The command will run all the routines automatically.
+The command will run all project's routines automatically.
 After a few seconds results can be found in your home folder under:
 
 `~/Results/template`.
@@ -48,33 +45,26 @@ To customize how the project is run modify `config.hh` and/or `config.param` fil
 
 - `base/` contains the source files of the QPROP library along with a Makefile to build it. It will be called automatically when using the main `Makefile` through `make`.
 
-- `plots/` contains Python scripts for visualising the qprop-produced results.
+- `plots/` contains Python scripts for visualizing the QPROP-produced results.
 
 - `projects/` holds predefined projects showcasing various functionality and a special `template` project designed for customization.
 
-- `remote/` contains a set of four predefined scripts for handling remote (ssh) code: distribution &execution (`uploadrun`), inspecting code execution (`view`), downloading the results (`download`) or removing them (`delete`).
+- `main` contains the main routines and includes
 
-- `wip` - ignore it for now (work in progress, aka trash-bin).
+  - `im.cc` is the shared imaginary time propagation code used for finding (`max-n-qnumber`-`l-qnumber`) eigenstates of given `l-qnumber` number (quantum l number).
+  - `re.cc` is the shared real time propagation code.
+  - `isurfv.cc` is the iSURFV routine code. Nothing essential has changed here since v3.2.
+  - `tsurff.cc` is the TSURFF routine code. Nothing essential has changed here since v3.2.
+  - `potentials.hh` holds (shared) predefined vector, scalar and imaginary potentials.
+  - `default-config.param` contains the default configuration for all projects. Can be adjusted for individual needs.
+  - `common-variables-for-make.mk` holds compiler options. Modify if:
+    - you want to change the compiler
+    - your gsl or MPI libraries/includes reside in different directories
+    - you encounter compilation errors
+  - `commonvars.hh` holds globals, produces logs and processes options. Used in all the standard routines (`im`, `re`, etc).
 
-- `bk` helper script for running jobs in the background and creating a log file with the name of the command passed.
-  Used by `remote` script.
-
-- `common-variables-for-make.mk` holds compiler options. Modify if:
-
-  - you want to change the compiler
-  - your gsl or MPI libraries/includes reside in different directories
-  - you encounter compilation errors
-
-- `commonvars.hh` holds globals, produces logs and processes options. Used in all the standard routines (`im`, `re`, etc.).
-
-- `default-config.param` contains the default configuration for all projects. Can be adjusted for individual needs.
-
-- `im.cc` is the shared imaginary time propagation code used for finding (`max-n-qnumber` - `l-qnumber`) eigenstates of given `l-qnumber` number (quantum l number).
-
-- `isurfv.cc` is the iSURFV routine code. Nothing essential has changed here since v3.2.
 - `Makefile` main makefile. See `Running` paragraph.
-- `potentials.hh` holds (shared) predefined vector, scalar and imaginary potentials.
-- `re.cc` is the shared real time propagation code.
+
 - `remote` can be used to build and run on a remote machine through ssh. Takes the following options:
   - `-host` (ip address or alias)
   - `-user` (username to use for ssh login)
@@ -88,7 +78,8 @@ To customize how the project is run modify `config.hh` and/or `config.param` fil
   - `-from` and `-upto` (for setting up limits to routines run, ex. `-from im -upto re` will run only `./im` and `./re`)
   - `-dryrun` (will present what will be run, but without running).
   - After those (mostly optional) options the regular `im/re/isurfv/tsurff` options can follow and will be pass to all routines.
-- `isurfv.cc` is the iSURFV/tSURFF routine code. Nothing essential has changed here since v3.2.
+- `bk` helper script for running jobs in the background and creating a log file with the name of the command passed.
+  Used by `remote` script.
 
 # Customization
 
