@@ -179,7 +179,7 @@ if [[ $gitrefresh = 1 ]]; then
                 [[ -d '$targetDir' ]] || mkdir -p '$targetDir'
                 cd '$targetDir'
         fi
-        if [[ -d '$qproptDir' ]]; then
+        if [[ -d '$qpropDir' ]]; then
                 cd '$qpropDir'
         fi
         (git pull && git submodule update --recursive && echo "'${GREEN}'Repo pulled to '${host}${NC}'") || (git clone --recurse-submodules '$gitrepo' && echo "'${GREEN}'Repo cloned to '${host}${NC}'") || (echo "'$err_str' Problem cloning repository'${NC}'" && exit 1)'
