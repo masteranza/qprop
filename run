@@ -1,0 +1,297 @@
+#!/bin/bash -u
+RED=$(tput setaf 1)
+GREEN=$(tput setaf 2)
+YELLOW=$(tput setaf 3)
+BLUE=$(tput setaf 4)
+PINK=$(tput setaf 5)
+BLACK=$(tput init)
+NC=$(tput sgr0)
+INFC="${YELLOW}"
+# default config file
+conf="config"
+proj="template"
+# defualt number of MPI processors (all)
+proc=0
+# get the number of cores just in case
+logical_cores=$(grep -c ^processor /proc/cpuinfo 2>/dev/null || sysctl -n hw.ncpu || echo "$NUMBER_OF_PROCESSORS")
+cores=$logical_cores
+mk=""
+upto=""
+from="im"
+# cores currently hold logical cores not physical, I know no good way to get physical cores on all platforms so we divide just in case
+[ $((logical_cores % 2)) -eq 0 ] && {
+    cores=$((logical_cores / 2))
+}
+# set -e #test
+echo "${INFC}Number of cores = ${GREEN}$cores${INFC} (used for ./im routines, if ${GREEN}value of -np option > 0${INFC} then this value will be used instead).${NC}"
+err_str="${RED}Error:${INFC}"
+suc_str="${GREEN}Success!${NC}"
+err_arg_order="$err_str Arguments passed to 'run' should always go first! (before those to im/re/isurfv/tsurff)${NC}"
+
+index=1
+declare -i index
+special=0
+dryrun=0
+cmd='' #For dryrun
+
+compiledQ() {
+    if (test -f "$1"); then
+        echo
+        echo "${INFC}Running ${GREEN}$1${YELLOW} routine${NC}"
+        return 0
+    else
+        echo "$err_str binary ${GREEN}$1${INFC} currently not compiled! (hint: you can pass -make $1 or -make all to fix this)${NC}"
+        return 1
+    fi
+}
+# Used to preview all the commands called (good for DEBUG)
+# set -x
+
+# Nice exit messages
+exit_trap() {
+    local lc="$BASH_COMMAND" rc=$?
+    if [[ $rc -eq 0 ]]; then
+        echo "$suc_str"
+    else
+        echo "$err_str Command [$lc] exited with code [$rc]${NC}"
+    fi
+}
+trap exit_trap EXIT
+set -e
+
+while [[ $# -gt 0 && $index -eq $# || $index -lt $# ]]; do
+    # echo "$index / $# : ${!index}"
+    case "${!index}" in
+    --proj* | -proj* | proj*)
+        [[ $index -gt 1 ]] && echo "$err_arg_order -proj found later." && exit 1
+        proj=$(echo $1 | sed -e 's/^[^=]*=//g')
+        if [[ $proj = "" ]]; then
+            echo "$err_str Mising value for option proj= / -proj=. Enter it without space!${NC}"
+        else
+            echo "${INFC}Running project: ${GREEN}$proj${NC}"
+        fi
+        shift
+        ;;
+    --np | -np | --processors)
+        shift
+        [[ $index -gt 1 ]] && echo "$err_arg_order -np found later." && exit 1
+        if [[ $1 != "" && $1 != *[^0-9]* ]]; then
+            if [ $1 -eq 1 ]; then
+                echo "${BLUE}MPI will not be used.${NC}"
+            elif [ $1 -eq 0 ]; then
+                echo "${PINK}MPI will use all available processors.${NC}"
+            else
+                echo "${INFC}Setting the number of processors used in MPI to ${GREEN}$1${INFC}.${NC}"
+            fi
+            proc=$1
+        else
+            echo "$err_str Mising value for option -np / --processors. Special values: 0 (all cores), 1 (sequential run)${NC}" && exit 1
+        fi
+        shift
+        ;;
+    --mk | -mk | --make | -make)
+        shift
+        [[ $index -gt 1 ]] && echo "$err_arg_order -mk found later." && exit 1
+        if [[ "$1" = "all" || "$1" = "im" || "$1" = "re" || "$1" = "isurfv" || "$1" = "tsurff" || "$1" = "tsurff-mpi" || "$1" = "clean" ]]; then
+            mk=$1
+            echo "${PINK}The project will be recompiled with ${GREEN}$mk${PINK}.${NC}"
+        else
+            echo "$err_str Missing value for option -mk / --make. Use all, im, re, isurfv, tsurff or tsurff-mpi.${NC}" && exit 1
+        fi
+        shift
+        ;;
+    -special | --special)
+        shift
+        [[ $index -gt 1 ]] && echo "$err_arg_order -special found later." && exit 1
+        special=1
+        ;;
+    -from | --from)
+        shift
+        [[ $index -gt 1 ]] && echo "$err_arg_order -from found later." && exit 1
+        if [[ "$1" = "re" || "$1" = "isurfv" || "$1" = "tsurff" ]]; then
+            from=$1
+            echo "${PINK}The project will run from ${GREEN}$from${PINK}.${NC}"
+        else
+            echo "$err_str Missing value for option -from / --from. Use re, isurfv, tsurff to start the calculation from this routine.${NC}" && exit 1
+        fi
+        shift
+        ;;
+    -upto | --upto)
+        shift
+        [[ $index -gt 1 ]] && echo "$err_arg_order -upto found later." && exit 1
+        if [[ "$1" = "im" || "$1" = "re" || "$1" = "isurfv" ]]; then
+            upto=$1
+            echo "${PINK}The project will run upto ${GREEN}$upto${PINK}.${NC}"
+        else
+            echo "$err_str Missing value for option -upto / --upto. Use im, re, isurfv to stop the calculation after this routine.${NC}" && exit 1
+        fi
+        shift
+        ;;
+    -dryrun | -dry-run | --dry-run | --dryrun)
+        shift
+        [[ $index -gt 1 ]] && echo "$err_arg_order -dryrun found later." && exit 1
+        dryrun=1
+        cmd=echo
+        ;;
+    -N | --max-n-qnumber) #Hackish but works without spoiling the good args
+        index+=1
+        opt_maxnqnumber="${!index}"
+        index+=1
+        ;;
+    -C | --conf_file) #Hackish but works without spoiling the good args
+        index+=1
+        conf="${!index}"
+        index+=1
+        ;;
+    *)
+        index+=1
+        # break
+        ;;
+    esac
+done
+
+if test -f "projects/$proj/$conf.param"; then
+    echo "${INFC}Custom config file ${GREEN}$conf${INFC}.param was detected.${NC}"
+else
+    echo "$err_str Invalid/Missing value for option -C / --conf_file. File ${RED}$conf${INFC}.param doesn't exist.${NC}" && exit 1
+fi
+
+experiment=$(grep -hr --include=''$conf'.param' -e "exp-name" projects/$proj | awk '{print $3}')
+maxnqnumber=$(grep -hr --include=''$conf'.param' -e "max-n-qnumber" projects/$proj | awk '{print $3}')
+[[ "$experiment" != "" ]] && echo "${INFC}exp-name is ${GREEN}$experiment${INFC}.${NC}"
+[[ "$maxnqnumber" != "" ]] && echo "${INFC}max-n-qnumber name is ${GREEN}$maxnqnumber${INFC}.${NC}"
+if [ ! -z ${opt_maxnqnumber+x} ]; then
+    maxnqnumber=$opt_maxnqnumber
+    echo "${INFC}max-n-qnumber name was re-set with custom option: ${GREEN}$maxnqnumber${INFC}.${NC}"
+fi
+
+[[ "$@" != "" ]] && echo "${INFC}Forwarding arguments ($#): ${GREEN}$@${NC}"
+
+[[ $special = 1 ]] &&
+    {
+        if test -f "projects/$proj/run"; then
+            echo "${PINK}The project will be run using custom run routine: ${GREEN}projects/$proj/run${NC}.${NC}"
+        else
+            echo "$err_str custom run routine not found in: ${GREEN}projects/$proj/run${NC}.${NC}" && exit 1
+        fi
+    }
+
+if [[ $proc -gt 0 ]]; then
+    cores=$proc
+    echo "${INFC}Number of cores = ${GREEN}$cores${INFC}"
+fi
+
+if [[ "$mk" != "" ]]; then
+    echo "${INFC}Shell:${NC} $SHELL"
+    echo "${INFC}Path variable:${NC} $PATH"
+    $cmd make proj=$proj $mk
+fi
+[[ "$mk" = "clean" ]] && exit 0
+
+#FIXME: LATER
+# [[ [[ "$from" = "tsurff" || "$from" = "isurfv" || "$from" = "re" ]] && "$upto" = "im" ]] && echo "$err_str conflicting -from $from and -upto $upto" && exit 1
+# [[ [[ "$from" = "tsurff" || "$from" = "isurfv" ]] && "$upto" = "re" ]] && echo "$err_str conflicting -from $from and -upto $upto" && exit 1
+[[ "$from" = "tsurff" && "$upto" = "isurfv" ]] && echo "$err_str conflicting -from $from and -upto $upto" && exit 1
+
+if [[ $special = 1 ]]; then
+    $cmd ./projects/$proj/run $@
+else
+    echo "${INFC}Moving to directory: ${GREEN}projects/$proj${NC}"
+    cd projects/$proj
+
+    [[ "$from" == "im" ]] && if [[ $maxnqnumber = 1 ]]; then
+        (compiledQ im) && $cmd ./im $@
+    elif (compiledQ im); then #We need to check if ./im exists before starting number of background jobs
+        # cores=64 remember to disable this
+        batches=$((maxnqnumber / cores))
+        extra=$((maxnqnumber % cores))
+        # echo "batches=$batches cores=$cores maxnq=$maxnqnumber"
+        index=$((maxnqnumber - 1)) #recycle
+        pids=""
+        FAILS=0
+
+        # declare -i FAILS
+        if [[ $cores -gt $maxnqnumber || $cores -eq $maxnqnumber ]]; then #More cores than processes to run
+            echo "${GREEN} Running ./im routines on all cores (background jobs)...${NC}"
+            while [[ $index -gt -1 ]]; do
+                echo "${GREEN} Sending jobs to core $index ${NC}"
+                $cmd ./im -L $index $@ &
+                pids="$pids $!"
+                index=$((index - 1))
+            done
+            wait
+            # for pid in $pids; do
+            #     wait $pid || let "FAILS+=1"
+            # done
+
+            # if [ $FAILS -gt 0 ]; then
+            #     echo "$FAIL processes failed. Exit"
+            #     exit 1
+            # fi
+        else # Splitting needed, going down would be better than going up...
+            echo "${GREEN} Batches: $batches Extra: $extra ${NC}"
+            minind=$((index - batches))
+            # echo "minind=$minind index=$index extra=$extra"
+            core=1
+            while [[ $minind -gt -2 ]]; do
+                if [[ $extra -gt 0 ]]; then
+                    minind=$((minind - 1))
+                    extra=$((extra - 1))
+                fi
+                {
+                    count=0
+                    while [[ $index -gt $minind ]]; do
+                        $cmd ./im -L $index $@
+                        index=$((index - 1))
+                        count=$((count + 1))
+                    done
+                    echo "${GREEN} $count jobs queued on core $core ${NC}"
+                } &
+                index=$minind
+                sleep 0.05
+                pids="$pids $!"
+                core=$((core + 1))
+                minind=$((minind - batches))
+            done
+            wait
+            # for pid in $pids; do
+            #     wait $pid || let "FAILS+=1"
+            # done
+            # if [ $FAILS -gt 0 ]; then
+            #     echo "$FAIL processes failed. Exit"
+            #     exit 1
+            # fi
+        fi
+    fi
+
+    [[ "$upto" == "im" ]] && exit 0 #UPPER BLOCK
+    #the rest runs as usual
+    [[ "$from" == "im" || "$from" == "re" ]] && (compiledQ re) && $cmd ./re $@
+
+    [[ "$upto" == "re" ]] && exit 0 #UPPER BLOCK
+    [[ "$from" == "im" || "$from" == "re" || "$from" == "isurfv" ]] && (compiledQ "isurfv") && $cmd ./isurfv $@
+    [[ "$upto" == "isurfv" ]] && exit 0 #UPPER BLOCK
+    [[ "$from" == "im" || "$from" == "re" || "$from" == "isurfv" || "$from" == "tsurff" ]] && (compiledQ "tsurff") && if [[ $proc = 0 ]]; then
+        $cmd mpirun tsurff-mpi $@
+    elif [[ $proc = 1 ]]; then
+        $cmd ./tsurff $@
+    else
+        $cmd mpirun -np $proc tsurff-mpi $@
+    fi
+fi
+# pids=""
+# FAILS=0
+# while [[ $index -lt $maxnqnumber ]]; do
+
+#     ./im -C $1 -L $index &
+#     pids="$pids $!"
+# done
+
+# for pid in $pids; do
+#     wait $pid || let "FAILS+=1"
+# done
+
+# if [ $RESULT -gt 0 ]; then
+#     echo "$FAIL processes failed. Exit"
+#     exit 1
+# fi

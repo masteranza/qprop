@@ -1,0 +1,15 @@
+.vscode
+*.o
+*.a
+*.dat
+*.log
+*.json
+*.conf
+re
+im
+tsurff
+isurfv
+tsurff-mpi
+is
+ts
+lib

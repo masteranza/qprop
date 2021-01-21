@@ -1,0 +1,59 @@
+# Example: Hydrogen, lambda=400 nm, I=2 10^14 Wcm^-2, circular polarization in XY-plane
+#META
+wf-log-interval      long    0
+obser-log-interval  long    20
+#IM STATE
+nuclear-charge          double  1.0
+max-n-qnumber           long    1
+l-qnumber               long    0
+m-qnumber               long    0
+#GRID
+qprop-dim               long    44
+delta-r                 double  0.2
+im-radial-grid-size     double  100.0
+delta-t             double  0.05
+imag-ampl           double  100.0
+imag-width          double  150.0
+re-radial-grid-size double  300
+l-grid-size         long    25
+#RE STATE
+initial-n             long    1
+initial-l             long    0
+initial-m             long    0
+#VECTOR POTENTIALS
+E1-x            double      0.0534
+E2-x            double      0.0
+E1-y            double      0.0534
+E2-y            double      0.0
+E1-z            double      0.0
+E2-z            double      0.0
+omega-1         double      0.114
+omega-2         double      0.0
+num-cycles-1-x  double      2.0
+num-cycles-2-x  double      0.0
+num-cycles-1-y  double      2.0
+num-cycles-2-y  double      0.0
+num-cycles-1-z  double      0.0
+num-cycles-2-z  double      0.0
+phase-1-x       double      0.0
+phase-2-x       double      0.0
+phase-1-y       double      0.25 #0.5*M_PI
+phase-2-y       double      0.0
+phase-1-z       double      0.0
+phase-2-z       double      0.0
+delay-1       double      0.0
+intensity-mult  double      1
+#ISURFV
+isurfv-imag-width-factor double 1.0
+#TSURFF
+R-tsurff        double      100.0
+additional-time double      0
+k-min-tsurff double 0.1
+k-max-surff double 2.0
+num-k-surff long 200
+num-theta-surff long 1
+num-phi-surff long 120
+cache-size-t long 512
+delta-k-scheme long 1
+expansion-scheme long 1
+isurfv-imag-width-factor double 1.0

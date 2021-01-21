@@ -1,0 +1,113 @@
+# This file holds parameters that will be load SECOND during initialization (after default-config.param)
+# Most can be overwritten with command line arguments defined in processOptions
+# You can see all of them by running any routine (im,re,isurfv,tsurff) with -h flag
+# You can also pass a custom config file, say config2.param with -C config2
+# META
+	# EXPERIMENT NAME 
+	# Subfolder for the data, if empty data will be saved in ~/Results/PROJECTNAME folder
+	# Otherwise the data will be saved in ~/Results/PROJECTNAME/EXPNAME folder 
+	# To save into projects/PROJECTNAME/dat/EXPNAME enable SAVE_NEXT_TO_PROJECT flag in commonvars.hh
+	exp-name                	string  
+	
+	# The following logs can be disabled by them to 0.
+	# How often to log to console and the log file. 
+	im-log-interval         	long    5000		# IM (Imaginary time propagation)
+	re-log-interval      		long    100         # RE (Real time propagation)
+	ts-log-interval      		long    100         # TSURFF computations
+	is-log-interval      		long    100         # ISURFV computations
+
+	potential-log				bool	1			# IM: Save potential to file 
+	vpotential-log				bool 	1			# RE: Save vector potential to seperate file
+	finalwf-log					bool	1			# RE: Save wf to file 
+	wf-log-interval      		long    1000        # RE: Save wf to file every n steps.
+	obser-log-interval   		long    1           # RE: How often to save information derived from wf into -observ.dat file.
+	#Specific quantities to calculate for -observ.dat file can be set in project's config.param file.
+
+#IMAGINARY TIME PROPAGATION (IM)
+	#STATE
+	nuclear-charge          	double  1.0		# Charge of the ion (can be used to adjust initial energy)
+	max-n-qnumber           	long    1		# Maximal n quantum number for states computed
+	l-qnumber               	long    0		# l quantum number of the states computed
+	m-qnumber               	long    0		# m quantum number of the states computed
+
+	#GRID
+	qprop-dim               	long    34		# 34 for linear polarization, 44 otherwise
+	delta-r                 	double  0.5		# radial grid spacing in atomic units
+	im-radial-grid-size     	double  100.0 	# radial grid size in atomic units
+
+	#TERMINATION
+	max-steps               	long    800000
+	target-accuracy         	double  1.0e-18
+
+
+#REAL TIME PROPAGATION (RE)
+	#GRID
+	delta-t              		double	0.1         # Time step for propagation; delta-r/4 is a sensible choice
+	imag-ampl            		double  100.0       # Amplitude of the imaginary potential
+	imag-width           		double  150.0       # Width of the imaginary potential
+	re-radial-grid-size  		double  300         # Grid size (must be larger than R-tsurff)
+	l-grid-size          		long    10          # Number of angular momenta in the corresponding expansion
+
+	#STATE
+	initial-n					long    1
+	initial-l					long    0
+	initial-m					long    0
+
+	#PULSE
+	# Maximum amplitudes of the electric field components
+	E1-x						double	0.0
+	E2-x            			double	0.0
+	E1-y            			double 	0.0
+	E2-y            			double	0.0
+	E1-z            			double	0.0 		#Use for linear polarization
+	E2-z            			double	0.0 
+	# Main frequencies of the laser beam components
+	omega-1         			double	0.0
+	omega-2         			double	0.0 
+	# Number of cycles of the main frequencies omega1,2
+	num-cycles-1-x  			double	0.0
+	num-cycles-2-x  			double	0.0
+	num-cycles-1-y  			double	0.0
+	num-cycles-2-y  			double	0.0
+	num-cycles-1-z  			double	0.0        
+	num-cycles-2-z  			double	0.0
+	# Carrier-envelope phases of each color and component in radians
+	phase-1-x       			double	0.0
+	phase-2-x       			double	0.0
+	phase-1-y       			double	0.0
+	phase-2-y       			double	0.0
+	phase-1-z       			double	0.0
+	phase-2-z       			double	0.0
+	# Delay between the pulses (units of omega-1 period)
+	delay-1		       			double	0.0
+	delay-2     	  			double	0.0
+
+	# Global intensity multiplier
+	intensity-mult  			double	1.0
+
+#ISURFV
+	# Width of imaginary potential in i-SURFV is multiplied by this factor
+	isurfv-imag-width-factor 	double	5.0
+
+#TSURFF
+	#Position of surff boundary
+	R-tsurff        			double	200.0       # The radial axis length: Rmax = R-tsurff + E0/omega + imag-width
+	additional-time 			double	0           # Additional time after the laser pulse is over
+	# This determines the duration of the simulation (slowest electron to reach the t-SURFF boundary).
+	k-min-tsurff 				double	0.5		
+	k-max-surff 				double	2.0 		# Largest k value in the calculated spectrum
+	num-k-surff 				long	500			# Number of k values for the spectrum
+	# Number of angles theta ( \theta \in [0:\pi] ). If even, automatically increased by 1. 
+	# However, if chosen just 1, then \theta = 0.5\pi is taken.
+	num-theta-surff 				long	1
+	# Number of angles phi ( \phi \in [0:2\pi] ). If the polarization is chosen linear, this value is switched to 1.
+	num-phi-surff 				long	120
+	# How many time steps are processed at a time during evaluation of the spectrum
+	cache-size-t 				long	512
+	# delta-k-scheme=1: equidistant k grid discretization with respect to momentum;
+	# delta-k-scheme=2: equidistant k grid discretization with respect to energy
+	delta-k-scheme 				long	1
+	# expansion-scheme=1: use for small number of angles and large number of ells (no partial spectra are produced)
+	# expansion-scheme=2: true expansion of the spectrum in spherical harmonics;
+	expansion-scheme 			long	1
+
