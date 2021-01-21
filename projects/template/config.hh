@@ -23,6 +23,9 @@ void processCustomOptions(int argc, char *argv[])
     // cout << argv[i] << endl;
   }
 }
+
+// This function can be used to hard-code variables for all the routines.
+// It gets run last, after the .params files and command line options are parsed.
 void configCustomVars()
 {
   //  You can reformat filenames to:
@@ -34,6 +37,9 @@ void configCustomVars()
   re_extraid = "-MY";
   initFilenames();
 }
+
+// This function should be used to set scalar and imaginary potentials.
+// One can use preprocessor defines to set them differently depending on routine.
 void configPotentials()
 {
 #ifdef MOMENTA_DATA
@@ -55,12 +61,15 @@ void configPotentials()
 #endif
 }
 
-//Initialize vector potentials.
+// Here you set your vector potentials.
+// Some predefined classes can be found in main/potentials.hh
+// If you need something else entirely uncomment the code located at the bottom of this file, customize and move it to the top of the file
+// You should also decide on your own how to calculate pulse related variables, like quiver.
 void configPulse()
 {
   //Look into potentials.hh to find predefined vecpot-derived classes.
-  // vecpot_x = Two_vectpot(omega1, omega2, n1x, n2x, delay2, mult * E1x, mult * E2x, phase1x, phase2x);
-  // vecpot_y = Two_vectpot(omega1, omega2, n1y, n2y, delay2, mult * E1y, mult * E2y, phase1y, phase2y);
+  // vecpot_x = Two_vectpot(omega1, omega2, n1x, n2x, delay1, delay2, mult * E1x, mult * E2x, phase1x, phase2x);
+  // vecpot_y = Two_vectpot(omega1, omega2, n1y, n2y, delay1, delay2, mult * E1y, mult * E2y, phase1y, phase2y);
   vecpot_x = new Zero_vecpot();
   vecpot_y = new Zero_vecpot();
   vecpot_z = new SinEnvSin2_vecpot(omega1, n1z, mult * E1z, phase1z);
@@ -75,7 +84,8 @@ void configPulse()
   duration += time_surff;
 #endif
 }
-
+// This is used to set the new size of the grid in radial_grid_size
+// And the extended_grid_size for the isurfv routine
 void correctGridSize()
 {
   radial_grid_size = re_radial_grid_size;
