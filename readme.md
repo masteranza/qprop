@@ -1,4 +1,4 @@
-# QPROP v3.91
+# QPROP v3.93
 
 QPROP (short for Quantum Propagation) is a tool for performing single active electron (SAE) simulations of quantum systems in intense laser fields.
 
@@ -106,6 +106,16 @@ The main rules for creating new project efficiently can be stated as:
 3. Occasionally, standard input (stdin) can be used for overwriting the above parameters by _defining_ (it should always stay _declared_) `processCustomOptions()` function in `config.hh`.
 4. Extra potential/laser parameters should be defined in `config.hh` or through custom stdin input parsed with `processCustomOptions()`.
 5. If you need to modify files other than the files in the project folder consider making a contribution, i.e., a pull request. Base directory should be good as it is, but if you find any improvements please let us know.
+
+## How to organize my project to accept updates easily?
+
+This project is currently in development so it is a good idea to be able to pull a new version without unnecessary merges.
+
+The answer to this question depends whether or not you'd like to use git to store your projects.
+If the answer is no, then just modify the `.gitignore` file and add your project folders to the list. Example: adding `projects/yourproject` to `.gitignore` will make git ignore `yourproject`.
+
+If the answer is yes, then you might want to consider git `submodules` for storing your projects inside this one (there could be better options).
+In this case you'd need to create a repository containing your `config.param` and `config.hh` files and then run `git submodule add git@github.com:yourprojectrepo.git projects/yourproject` inside QPROP main directory.
 
 # Changes compared with v3.2
 
