@@ -69,6 +69,8 @@ exit_trap() {
 trap exit_trap EXIT
 set -e
 
+# TODO: write better usage help on the order of parameters
+# TODO: either accept both '-option=value' and '-option value' or just one type consistently
 while [[ $# -gt 0 && $index -eq $# || $index -lt $# ]]; do
     # echo "$index / $# : ${!index}"
     case "${!index}" in
