@@ -27,7 +27,7 @@ std::vector<std::string> cmdLineNotes;
 const string confext(".param");
 string this_dir("./");
 string conf_file("config");
-string defu_file("../../default-config");
+string defu_file("../../main/default-config");
 //Pointer to the parameter list
 parameterList *para;
 //Common file pointers, NULL is necessary to tell whether we wan't log to happen or not.

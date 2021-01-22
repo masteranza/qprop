@@ -130,7 +130,7 @@ In this case you'd need to create a repository containing your `config.param` an
 - Defaults and parameter overrides. By introducing `default-config.param` new projects need less initial configuration. The default configurations will be drawn from this file on init in every routine
   - The `config.param` of example projects, such as `attoclock`, could have had less parameters, but we retain them to protect the projects from modifying the defaults)
   - The "general order" in which variables are initiated or overridden goes as follows
-    `default-config.param => config.param => processOptions() => processCustomOptions()`
+    `default-config.param => config.param => processOptions() => processCustomOptions() => configCustomVars()`
     where processOptions() uses unix `getopt_long` to recognize long and short options used for quick change of variable values.
     - For example `nuclear-charge` can be changed by simply passing `-Z newvalue` or `--nuclear-charge new value` options (`newvalue` neads to be a number) to any of the routines.
     - All defined options can be displayed with `-h` option.

@@ -52,7 +52,6 @@
 	initial-n					long    1
 	initial-l					long    0
 	initial-m					long    0
-
 	#PULSE
 	# Maximum amplitudes of the electric field components
 	E1-x						double	0.0
@@ -79,9 +78,8 @@
 	phase-1-z       			double	0.0
 	phase-2-z       			double	0.0
 	# Delay between the pulses (units of omega-1 period)
-	delay-1		       			double	0.0
-	delay-2     	  			double	0.0
-
+	delay-1						double	0.0
+	delay-2						double	0.0
 	# Global intensity multiplier
 	intensity-mult  			double	1.0
 
@@ -99,9 +97,9 @@
 	num-k-surff 				long	500			# Number of k values for the spectrum
 	# Number of angles theta ( \theta \in [0:\pi] ). If even, automatically increased by 1. 
 	# However, if chosen just 1, then \theta = 0.5\pi is taken.
-	num-theta-surff 				long	1
+	num-theta-surff 			long	301
 	# Number of angles phi ( \phi \in [0:2\pi] ). If the polarization is chosen linear, this value is switched to 1.
-	num-phi-surff 				long	120
+	num-phi-surff 				long	1
 	# How many time steps are processed at a time during evaluation of the spectrum
 	cache-size-t 				long	512
 	# delta-k-scheme=1: equidistant k grid discretization with respect to momentum;
