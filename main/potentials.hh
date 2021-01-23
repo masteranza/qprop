@@ -105,7 +105,6 @@ protected:
 public:
   SinEnvSin2_vecpot(double om1, double n_cyc1, double del1, double E_max1, double cep1 = 0.0) : omega1(om1), n_c1(n_cyc1), delay1(del1), E_1(E_max1), phi_cep1(cep1)
   {
-
     if (omega1 < 0.0)
       throw "Frequency omega1 can't be negative.";
     if (omega1 == 0.0 && E_1 != 0.0)
@@ -189,7 +188,7 @@ protected:
   double Up2;
 
 public:
-  TwoSinEnvSin2_vecpot(double om1, double om2, double n_cyc1, double n_cyc2, double delay, double E_max1, double E_max2, double cep1 = 0.0, double cep2 = 0.0) : SinEnvSin2_vecpot(om1, n_cyc1, E_max1, cep1), omega2(om2), n_c2(n_cyc2), E_2(E_max2), phi_cep2(cep2)
+  TwoSinEnvSin2_vecpot(double om1, double om2, double n_cyc1, double n_cyc2, double del1, double del2, double E_max1, double E_max2, double cep1 = 0.0, double cep2 = 0.0) : SinEnvSin2_vecpot(om1, n_cyc1, del1, E_max1, cep1), omega2(om2), n_c2(n_cyc2), delay2(del2), E_2(E_max2), phi_cep2(cep2)
   {
     if (omega2 < 0.0)
       throw "Frequency omega2 can't be negative.";
@@ -201,7 +200,7 @@ public:
       cout << "Warning: one cycle pulses generate error in the vector potential integral. n_2 artifically increased to 1.01." << endl;
       n_c2 = 1.01;
     }
-    delay2 = 2 * M_PI * delay / omega1;
+    delay2 = 2 * M_PI * delay2 / omega1;
     duration2 = n_c2 * 2 * M_PI / omega2 + delay2;
     duration = (duration1 > duration2) ? duration1 : duration2; // Total duration of the (overlaping) pulses
     //Phase in units of 2*M_PI for convienence
@@ -304,7 +303,7 @@ public:
 class SinRampTwoCycleSin2_vecpot : public SinEnvSin2_vecpot
 {
 public:
-  SinRampTwoCycleSin2_vecpot(double om1, double n_cyc1, double E_max1, double cep1 = 0.0) : SinEnvSin2_vecpot(om1, n_cyc1, E_max1, cep1){};
+  SinRampTwoCycleSin2_vecpot(double om1, double n_cyc1, double del1, double E_max1, double cep1 = 0.0) : SinEnvSin2_vecpot(om1, n_cyc1, del1, E_max1, cep1){};
 
   double operator()(double time, int me) const
   {
@@ -338,7 +337,7 @@ public:
 class TwoSinRampTwoCycleSin2_vecpot : public TwoSinEnvSin2_vecpot
 {
 public:
-  TwoSinRampTwoCycleSin2_vecpot(double om1, double om2, double n_cyc1, double n_cyc2, double delay, double E_max1, double E_max2, double cep1 = 0.0, double cep2 = 0.0) : TwoSinEnvSin2_vecpot(om1, om2, n_cyc1, n_cyc2, delay, E_max1, E_max2, cep1, cep2){};
+  TwoSinRampTwoCycleSin2_vecpot(double om1, double om2, double n_cyc1, double n_cyc2, double del1, double del2, double E_max1, double E_max2, double cep1 = 0.0, double cep2 = 0.0) : TwoSinEnvSin2_vecpot(om1, om2, n_cyc1, n_cyc2, del1, del2, E_max1, E_max2, cep1, cep2){};
 
   double operator()(double time, int me) const
   {

@@ -55,7 +55,7 @@ string isurfv_prefix("/is");
 #ifdef SAVE_NEXT_TO_PROJECT
 string dir_name = create_dir_here("/dat");
 #else
-string dir_name = create_dir_in_home("/Results/" + to_string(STRINGIFY(PROJNAME)));               //Note the slash at the beginning!
+string dir_name = create_dir_in_home("/Results/" + to_string(STRINGIFY(PROJNAME))); //Note the slash at the beginning!
 #endif
 //Vars
 long im_log_interval, re_log_interval, is_log_interval, ts_log_interval, wf_log_interval, obser_log_interval, max_steps;
@@ -198,7 +198,13 @@ void loadParams(string conf_file, string defu_file)
 //The following are called after init
 string imMakeFileName(int n, int l, int m)
 {
+#ifdef IM_SHORTEST_NAME
   return im_prefix + im_extraid + string("-n") + to_string(n) + string("-l") + to_string(l) + string("-m") + to_string(m);
+#else
+  char dest_string[12];
+  sprintf(dest_string, "-n%.2d-l%.2d-m%.2d", n, l, m);
+  return im_prefix + im_extraid + string(dest_string);
+#endif
 }
 string str_nuclear_charge()
 {
@@ -213,14 +219,28 @@ void initCommonStrings()
   // std::stringstream sstream;
   // sstream << nuclear_charge;
   // str_nuclear_charge = string("-Z") + sstream.str();
-
+#ifdef IM_SHORTEST_NAME
   str_max_n_qnumber = string("-n") + to_string(max_n_number);
   str_l_qnumber = string("-l") + to_string(l_qnumber);
   str_m_qnumber = string("-m") + to_string(m_qnumber);
-
   str_initial_n = string("-n") + to_string((int)re_initial_n);
   str_initial_l = string("-l") + to_string((int)re_initial_l);
   str_initial_m = string("-m") + to_string((int)re_initial_m);
+#else
+  char dest_string[4];
+  sprintf(dest_string, "-n%.2d", max_n_number);
+  str_max_n_qnumber = to_string(dest_string);
+  sprintf(dest_string, "-l%.2d", l_qnumber);
+  str_l_qnumber = to_string(dest_string);
+  sprintf(dest_string, "-m%.2d", m_qnumber);
+  str_m_qnumber = to_string(dest_string);
+  sprintf(dest_string, "-n%.2d", (int)re_initial_n);
+  str_initial_n = to_string(dest_string);
+  sprintf(dest_string, "-l%.2d", (int)re_initial_l);
+  str_initial_l = to_string(dest_string);
+  sprintf(dest_string, "-m%.2d", (int)re_initial_m);
+  str_initial_m = to_string(dest_string);
+#endif
 }
 
 void initFilenames()

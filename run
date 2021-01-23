@@ -79,6 +79,8 @@ while [[ $# -gt 0 && $index -eq $# || $index -lt $# ]]; do
         proj=$(echo $1 | sed -e 's/^[^=]*=//g')
         if [[ $proj = "" ]]; then
             echo "$err_str Mising value for option proj= / -proj=. Enter it without space!${NC}"
+        elif [[ ! -d "projects/$proj" ]]; then
+            echo "$err_str The directory projects/${proj} does not exist!${NC}"
         else
             echo "${INFC}Running project: ${GREEN}$proj${NC}"
         fi

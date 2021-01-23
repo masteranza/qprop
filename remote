@@ -29,7 +29,7 @@ declare -i index
 host=""
 user="ranza"
 sourceDir="./"
-targetDir=""
+targetDir="~"
 qpropDir="qprop"
 resultsDir="~/Results"
 resultsLocalDir=~/Results
@@ -102,17 +102,18 @@ while [[ $# -gt 0 && $index -eq $# || $index -lt $# ]]; do
                 fi
                 shift
                 ;;
-        --targetDir* | -targetDir* | targetDir*) #needs to be removed
-                [[ $index -gt 1 ]] && echo "$err_str -targetDir found later." && exit 1
-                targetDir=$(echo $1 | sed -e 's/^[^=]*=//g')
-                if [[ $targetDir = "" ]]; then
-                        echo "${INFC}QPROP will be placed in home directory${NC}"
-                        # echo "$err_str Mising value for option -targetDir=. Enter it without space!${NC}"
-                else
-                        echo "${INFC}Setting the tagetDir to: ${GREEN}$targetDir${NC}"
-                fi
-                shift
-                ;;
+        # --targetDir* | -targetDir* | targetDir*) #needs to be removed
+        #         [[ $index -gt 1 ]] && echo "$err_str -targetDir found later." && exit 1
+        #         targetDir=$(echo $1 | sed -e 's/^[^=]*=//g')
+        #         if [[ $targetDir = "" ]]; then
+        #                 echo "${INFC}QPROP will be placed in home directory${NC}"
+        #                 targetDir="~"
+        #                 # echo "$err_str Mising value for option -targetDir=. Enter it without space!${NC}"
+        #         else
+        #                 echo "${INFC}Setting the tagetDir to: ${GREEN}$targetDir${NC}"
+        #         fi
+        #         shift
+        #         ;;
         -action | --action)
                 shift
                 [[ $index -gt 1 ]] && echo "$err_str -action found later." && exit 1
@@ -182,10 +183,12 @@ address="$user@$host"
 if [[ $gitrefresh = 1 ]]; then
         #Time to give github to refresh
         sleep 1
-        ssh $address 'if [[ "'${targetDir}'" != "" ]]; then
-                [[ -d '$targetDir' ]] || mkdir -p '$targetDir'
-                cd '$targetDir'
-        fi
+        ssh $address '
+        cd '${targetDir}'
+        # if [[ "'${targetDir}'" != "~" ]]; then
+        #         [[ -d '$targetDir' ]] || mkdir -p '$targetDir'
+        #         cd '$targetDir'
+        # fi
         if [[ -d '$qpropDir' ]]; then
                 cd '$qpropDir'
         fi
@@ -218,9 +221,9 @@ if [[ $upload = 1 ]]; then
                 custompath=""
         fi
         #Create any directories if needed
-        ssh $address 'if [[ '${targetDir}' != "" ]]; then
-                [[ -d '$targetDir' ]] || mkdir -p '$targetDir'
-        fi'
+        # ssh $address 'if [[ '${targetDir}' != "" ]]; then
+        # [[ -d '$targetDir' ]] || mkdir -p '$targetDir'
+        # fi'
         #Dry-run
         rsync $custompath -avhr --dry-run --exclude='.vscode' --exclude='lib' --exclude='.git' --exclude='.DS_Store' --exclude='*.o' --exclude='*.a' --exclude='*.dat' --exclude='*.log' --exclude='im' --exclude='re' --exclude='isurfv' --exclude='tsurff' --exclude='tsurff-mpi' $sourceDir $address:$targetDir/$qpropDir
         #Ask
