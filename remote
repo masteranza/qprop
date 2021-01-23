@@ -173,7 +173,8 @@ done
 
 if [[ $gitrefresh = 1 ]]; then
         git submodule foreach 'git add . && git diff-index --quiet HEAD || git commit -m "test change"'
-        git add . && git diff-index --quiet HEAD || (git commit -m "auto remote commit" && git push --recurse-submodules=on-demand && echo "${GREEN}Repo pushed from local${NC}")
+        git add . && git diff-index --quiet HEAD || (git commit -m "auto remote commit" && echo "${GREEN}Auto-commit${NC}")
+        git push --recurse-submodules=on-demand && echo "${GREEN}Repo pushed to remote${NC}"
         # git diff-index --quiet HEAD || (git commit -m "auto remote commit" && git push && echo "${GREEN}Repo pushed from local${NC}")
 fi
 [[ "$host" == "" ]] && echo "$err_str You need to pass host name using -host=hostname${NC}" && exit 1
