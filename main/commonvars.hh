@@ -1,6 +1,7 @@
 // If you really want to save the results in the project folder
 // Enable the following flag
 // #define SAVE_NEXT_TO_PROJECT
+#define SHORTEST_NAME
 
 #define STRINGIFY_(x) #x
 #define STRINGIFY(x) STRINGIFY_(x)
@@ -198,7 +199,7 @@ void loadParams(string conf_file, string defu_file)
 //The following are called after init
 string imMakeFileName(int n, int l, int m)
 {
-#ifdef IM_SHORTEST_NAME
+#ifdef SHORTEST_NAME
   return im_prefix + im_extraid + string("-n") + to_string(n) + string("-l") + to_string(l) + string("-m") + to_string(m);
 #else
   char dest_string[12];
@@ -215,11 +216,7 @@ string str_nuclear_charge()
 }
 void initCommonStrings()
 {
-
-  // std::stringstream sstream;
-  // sstream << nuclear_charge;
-  // str_nuclear_charge = string("-Z") + sstream.str();
-#ifdef IM_SHORTEST_NAME
+#ifdef SHORTEST_NAME
   str_max_n_qnumber = string("-n") + to_string(max_n_number);
   str_l_qnumber = string("-l") + to_string(l_qnumber);
   str_m_qnumber = string("-m") + to_string(m_qnumber);
