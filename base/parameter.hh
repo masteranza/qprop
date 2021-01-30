@@ -31,6 +31,16 @@ struct compareNameWith : public std::unary_function<parameter, bool>
   string _name;
   bool operator()(parameter cmp) { return (cmp._name == _name); };
 };
+static inline string trim(std::string &s) 
+{
+    s.erase(s.begin(), std::find_if(s.begin(), s.end(),
+            std::not1(std::ptr_fun<int, int>(std::isspace))));
+    s.erase(std::find_if(s.rbegin(), s.rend(),
+            std::not1(std::ptr_fun<int, int>(std::isspace))).base(), s.end());
+    return s;
+}
+
+
 
 ///Class for reading parameters from a file.
 class parameterList
@@ -38,22 +48,24 @@ class parameterList
   std::string ovr_string = "Default parameter override with ";
   std::string new_string = "New parameter initialized with ";
   std::vector<parameter> _param_list;
-  std::vector<parameter> _param_defu;
+  // std::vector<parameter> _param_defu;
+  std::vector<parameter> _param_merg;
   std::string list_name;
   std::string defu_name;
-  bool def_loaded = false;
 
 public:
+  bool def_loaded = false;
   std::vector<string> paramNotes;
   parameterList();
   parameterList(string file_name, string defaults_name);
   // void setDouble(string file_name, string name, double value);
-  double getDouble(string name);
-  string getString(string name);
-  long getLong(string name);
-  bool getBool(string name);
-  std::vector<double> getVectorDouble(string name, bool opt);
-  std::vector<long> getVectorLong(string name, bool opt);
+  double getDouble(string name, bool opt = false);
+  string getString(string name, bool opt = false);
+  long getLong(string name, bool opt= false);
+  bool getBool(string name, bool opt =false);
+  std::vector<double> getVectorDouble(string name, bool opt= false);
+  std::vector<long> getVectorLong(string name, bool opt =false);
+  void copyMergedParamFileTo(string filepath);
 };
 
 #endif

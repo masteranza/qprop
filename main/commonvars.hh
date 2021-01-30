@@ -1,7 +1,28 @@
 // If you really want to save the results in the project folder
 // Enable the following flag
 // #define SAVE_NEXT_TO_PROJECT
-#define SHORTEST_NAME
+// By default the filename strings contain extra 0 pading for n,l,m numbers (for two digit numbers).
+// If you don't like that, set the following flag to "" (empty string)
+#define STATE_NAME_PADDING ".2"
+// TODO: Add optional colored output (someday)
+// #define RESET   "\033[0m"
+// #define BLACK   "\033[30m"      /* Black */
+// #define RED     "\033[31m"      /* Red */
+// #define GREEN   "\033[32m"      /* Green */
+// #define YELLOW  "\033[33m"      /* Yellow */
+// #define BLUE    "\033[34m"      /* Blue */
+// #define MAGENTA "\033[35m"      /* Magenta */
+// #define CYAN    "\033[36m"      /* Cyan */
+// #define WHITE   "\033[37m"      /* White */
+// #define BOLDBLACK   "\033[1m\033[30m"      /* Bold Black */
+// #define BOLDRED     "\033[1m\033[31m"      /* Bold Red */
+// #define BOLDGREEN   "\033[1m\033[32m"      /* Bold Green */
+// #define BOLDYELLOW  "\033[1m\033[33m"      /* Bold Yellow */
+// #define BOLDBLUE    "\033[1m\033[34m"      /* Bold Blue */
+// #define BOLDMAGENTA "\033[1m\033[35m"      /* Bold Magenta */
+// #define BOLDCYAN    "\033[1m\033[36m"      /* Bold Cyan */
+// #define BOLDWHITE   "\033[1m\033[37m"      /* Bold White */
+
 
 #define STRINGIFY_(x) #x
 #define STRINGIFY(x) STRINGIFY_(x)
@@ -56,14 +77,14 @@ string isurfv_prefix("/is");
 #ifdef SAVE_NEXT_TO_PROJECT
 string dir_name = create_dir_here("/dat");
 #else
-string dir_name = create_dir_in_home("/Results/" + to_string(STRINGIFY(PROJNAME))); //Note the slash at the beginning!
+string dir_name = create_dir_in_home("/Results/" + to_string(STRINGIFY(PROJNAME)));               //Note the slash at the beginning!
 #endif
 //Vars
 long im_log_interval, re_log_interval, is_log_interval, ts_log_interval, wf_log_interval, obser_log_interval, max_steps;
 bool potential_log, vpotential_log, finalwf_log;
 
 //ATOM
-double target_accuracy, nuclear_charge;
+double target_accuracy, nuclear_charge, target_energy;
 long qprop_dim, max_n_number, l_qnumber, m_qnumber, re_initial_n, re_initial_l, re_initial_m;
 scalarpot *scalarpotx;
 imagpot *imaginarypot;
@@ -106,8 +127,8 @@ void logAdd(char const *fmt, ...)
 //TODO: INIT only what's really needed.
 void loadParams(string conf_file, string defu_file)
 {
+  
   para = new parameterList(this_dir + conf_file + confext, this_dir + defu_file + confext);
-
   //EXPERIMENT META
   exp_name = para->getString("exp-name");
   im_log_interval = para->getLong("im-log-interval");
@@ -131,6 +152,7 @@ void loadParams(string conf_file, string defu_file)
   re_initial_n = para->getLong("initial-n");
   re_initial_l = para->getLong("initial-l");
   re_initial_m = para->getLong("initial-m");
+  target_energy = para->getDouble("target-energy", true);
   super_positions = para->getVectorLong("super-positions", true);
   re_superpositions = !super_positions.empty();
   super_weights = para->getVectorDouble("super-weights", super_positions.empty());
@@ -199,13 +221,9 @@ void loadParams(string conf_file, string defu_file)
 //The following are called after init
 string imMakeFileName(int n, int l, int m)
 {
-#ifdef SHORTEST_NAME
-  return im_prefix + im_extraid + string("-n") + to_string(n) + string("-l") + to_string(l) + string("-m") + to_string(m);
-#else
   char dest_string[12];
-  sprintf(dest_string, "-n%.2d-l%.2d-m%.2d", n, l, m);
+  sprintf(dest_string, "-n%" STATE_NAME_PADDING "d-l%" STATE_NAME_PADDING "d-m%" STATE_NAME_PADDING "d", n, l, m);
   return im_prefix + im_extraid + string(dest_string);
-#endif
 }
 string str_nuclear_charge()
 {
@@ -216,28 +234,19 @@ string str_nuclear_charge()
 }
 void initCommonStrings()
 {
-#ifdef SHORTEST_NAME
-  str_max_n_qnumber = string("-n") + to_string(max_n_number);
-  str_l_qnumber = string("-l") + to_string(l_qnumber);
-  str_m_qnumber = string("-m") + to_string(m_qnumber);
-  str_initial_n = string("-n") + to_string((int)re_initial_n);
-  str_initial_l = string("-l") + to_string((int)re_initial_l);
-  str_initial_m = string("-m") + to_string((int)re_initial_m);
-#else
   char dest_string[4];
-  sprintf(dest_string, "-n%.2d", max_n_number);
+  sprintf(dest_string, "-n%" STATE_NAME_PADDING "d", max_n_number);
   str_max_n_qnumber = to_string(dest_string);
-  sprintf(dest_string, "-l%.2d", l_qnumber);
+  sprintf(dest_string, "-l%" STATE_NAME_PADDING "d", l_qnumber);
   str_l_qnumber = to_string(dest_string);
-  sprintf(dest_string, "-m%.2d", m_qnumber);
+  sprintf(dest_string, "-m%" STATE_NAME_PADDING "d", m_qnumber);
   str_m_qnumber = to_string(dest_string);
-  sprintf(dest_string, "-n%.2d", (int)re_initial_n);
+  sprintf(dest_string, "-n%" STATE_NAME_PADDING "d", (int)re_initial_n);
   str_initial_n = to_string(dest_string);
-  sprintf(dest_string, "-l%.2d", (int)re_initial_l);
+  sprintf(dest_string, "-l%" STATE_NAME_PADDING "d", (int)re_initial_l);
   str_initial_l = to_string(dest_string);
-  sprintf(dest_string, "-m%.2d", (int)re_initial_m);
+  sprintf(dest_string, "-m%" STATE_NAME_PADDING "d", (int)re_initial_m);
   str_initial_m = to_string(dest_string);
-#endif
 }
 
 void initFilenames()
@@ -322,6 +331,8 @@ void configVars()
   initCommonStrings();
   //Inits all filenames used in ./im; ./re; ./isurfv; ./tsurff
   initFilenames();
+
+  para->copyMergedParamFileTo(dir_name + "/merged_"+conf_file + confext);
 }
 void logVecpot(const vecpot *fpx,
                const vecpot *fpy,
@@ -603,10 +614,11 @@ int processOptions(int argc, char *argv[])
 
   const char *const short_opts = "hve:Z:N:L:M:G:n:l:m:g:y:r:t:i:d:D:o:O:C:U:";
   //Check if new conf and default conf files were passed
+  
   getCustomConfig(argc, argv, long_opts, short_opts);
+  
   //Initialize conf files
   loadParams(conf_file, defu_file);
-
   //To reload getopt_long
   optind = 1;
   int opt;

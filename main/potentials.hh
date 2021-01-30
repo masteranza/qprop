@@ -92,15 +92,15 @@ class SinEnvSin2_vecpot : public vecpot
 {
 protected:
   double omega1;
-  double E_1;
   double n_c1;
+  double delay1;
+  double E_1;
   double phi_cep1;
   double ww1;
   double duration1;
   double duration;
   double excursion_ampl1;
   double Up1;
-  double delay1;
 
 public:
   SinEnvSin2_vecpot(double om1, double n_cyc1, double del1, double E_max1, double cep1 = 0.0) : omega1(om1), n_c1(n_cyc1), delay1(del1), E_1(E_max1), phi_cep1(cep1)
@@ -178,10 +178,10 @@ class TwoSinEnvSin2_vecpot : public SinEnvSin2_vecpot
 {
 protected:
   double omega2;
-  double E_2;
   double n_c2;
-  double phi_cep2;
   double delay2;
+  double E_2;
+  double phi_cep2;
   double ww2;
   double duration2;
   double excursion_ampl2;

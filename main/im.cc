@@ -71,12 +71,55 @@ int main(int argc, char **argv)
     };
 
     //HAMILTONIAN
-    hamilton.init(g, always_zero2, always_zero2, always_zero2, std::ref(*scalarpotx), std::ref(*imaginarypot));
     staticpot.init(g.size());
+    hamilton.init(g, always_zero2, always_zero2, always_zero2, std::ref(*scalarpotx), std::ref(*imaginarypot));    
     staticpot.calculate_staticpot(g, hamilton);
+    if (target_energy != 0.0)
+    {
+        int max_tries=1000;
+        logAdd("   Looking for appropriate nuclear_charge given the target_energy=%e\n", target_energy);
+        logAdd("   The error should be smaller than: %e\n",pow(10.0, -1.0+log10(abs(target_energy))));
+        while (abs(E_tot - target_energy) > pow(10.0, (int) -2.0+log10(abs(target_energy))) && max_tries--)
+        {
+            E_tot = 0.0;
+            acc = 1.0;
+            long ts = 0;
+            //We need to reinit those each time
+            configPotentials();
+            hamilton.init(g, always_zero2, always_zero2, always_zero2, std::ref(*scalarpotx), std::ref(*imaginarypot));
+            staticpot.calculate_staticpot(g, hamilton);
+            logAdd("   Current nuclear_charge=%e potent=%e\n", nuclear_charge, hamilton.scalarpot(1.0, l_qnumber, 1.0, 0.0, 0.0));
+            logAdd("%7s/%7s%25s%25s\n", "STEP", "TOTAL", "ENERGY", "ACCURACY");
+            
+            while (acc > target_accuracy && ts < max_steps)
+            {
+                wf[0].propagate(timestep, 0.0, g, hamilton, me, staticpot, m_qnumber, nuclear_charge);
+                wf[0].extract_ell_m(g, l_qnumber, m_qnumber);
+                wf[0].normalize(g);
+
+                const double time = double(ts) * imag(timestep);
+                E_tot_prev = E_tot;
+                E_tot = real(wf[0].energy(0.0, g, hamilton, me, staticpot, nuclear_charge));
+                acc = fabs((E_tot_prev - E_tot) / (E_tot_prev + E_tot));
+
+                if (im_log_interval && (ts % im_log_interval == 0))
+                {
+                    // logAdd("%7ld/%7ld%25.15e%25.15e\n", ts, max_steps, E_tot, acc);
+                }
+                ts++;
+            };
+            logAdd("%7ld/%7ld%25.15e%25.15e\n", ts, max_steps, E_tot, acc);
+            // Not going straight with the analytical formula as on grid we could overshoot
+            // Taking 2/3 of the step instead
+            nuclear_charge *= (2.0 * sqrt(abs(target_energy/E_tot)) + 1.0)/3.0;
+            sleep(1.0);
+        };
+        logAdd("   Found best nuclear_charge=%e yielding energy=%e (diff=%e)\n\n", nuclear_charge, E_tot, target_energy - E_tot);
+    }
+
     logPotential(hamilton);
     logSilent(g);
-
+    
     //IMAGINARY TIME PROPAGATION
     for (long nr1 = 0; nr1 < max_n_number - l_qnumber; nr1++)
     {

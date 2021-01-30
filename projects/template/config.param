@@ -25,11 +25,11 @@
 
 #IMAGINARY TIME PROPAGATION (IM)
 	#STATE
+	target-energy				double	-0.2	# Target energy of the ground state. If present nuclear_charge will be changed!
 	nuclear-charge          	double  1.0		# Charge of the ion (can be used to adjust initial energy)
 	max-n-qnumber           	long    1		# Maximal n quantum number for states computed
 	l-qnumber               	long    0		# l quantum number of the states computed
 	m-qnumber               	long    0		# m quantum number of the states computed
-
 	#GRID
 	qprop-dim               	long    34		# 34 for linear polarization, 44 otherwise
 	delta-r                 	double  0.5		# radial grid spacing in atomic units
