@@ -352,7 +352,7 @@ if [[ $view = 1 ]]; then
 
         echo -e "\n'${RED}'RUNNER LOGS:'${NC}'"
         cd $targetDir
-        find . -type f -name "run*.log" | while read i
+        find . -type f -name "run*.log" | grep '$conf' | while read i
         do 
                 echo "'${BLUE}'File: $i'${NC}'" 
                 tail -n 10 "$i"
