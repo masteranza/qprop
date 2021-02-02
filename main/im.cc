@@ -96,9 +96,6 @@ int main(int argc, char **argv)
         acc = 1.0;
         long ts = 0;
 
-        if (target_energy != 0.0 && nr1 == 0) //If we have already relaxed the groundstate before
-            continue;
-
         // TODO: add m support!
         while (acc > target_accuracy && ts < max_steps)
         {
