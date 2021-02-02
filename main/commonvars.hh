@@ -130,7 +130,7 @@ void loadParams(string conf_file, string defu_file)
   
   para = new parameterList(this_dir + conf_file + confext, this_dir + defu_file + confext);
   //EXPERIMENT META
-  exp_name = para->getString("exp-name");
+  exp_name = para->getString("exp-name", true);
   im_log_interval = para->getLong("im-log-interval");
   re_log_interval = para->getLong("re-log-interval");
   is_log_interval = para->getLong("is-log-interval");
@@ -331,8 +331,6 @@ void configVars()
   initCommonStrings();
   //Inits all filenames used in ./im; ./re; ./isurfv; ./tsurff
   initFilenames();
-
-  para->copyMergedParamFileTo(dir_name + "/merged_"+conf_file + confext);
 }
 void logVecpot(const vecpot *fpx,
                const vecpot *fpy,
@@ -387,6 +385,9 @@ void logConfig()
 }
 void logSilent(grid &g)
 {
+  //TODO: In future this will be the only thing done by logSilent
+  para->copyMergedParamFileTo(dir_name + "/merged_"+conf_file + confext);
+  
   if (file_log == NULL)
     return;
 #ifdef IM

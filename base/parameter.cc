@@ -267,10 +267,13 @@ double parameterList::getDouble(string name, bool opt /*= false*/)
   std::vector<parameter>::const_iterator it;
 
   it = find_if(_param_merg.begin(), _param_merg.end(), mycmp);
-  if (it == _param_merg.end() && !opt)
+  if (it == _param_merg.end())
   {
-    std::cerr << " Parameter " << name << " not found in the " << list_name << " nor " << defu_name << " files" << std::endl;
-    exit(-1);
+    if(!opt)
+    {
+      std::cerr << " Parameter " << name << " not found in the " << list_name << " nor " << defu_name << " files" << std::endl;
+      exit(-1);
+    }
   }
   else if (it->_type != "double")
   {
@@ -282,8 +285,8 @@ double parameterList::getDouble(string name, bool opt /*= false*/)
     //Reading default param
     stringstream bla(it->_value);
     bla >> blub;
-    return blub;
   };
+  return blub;
 };
 
 long parameterList::getLong(string name, bool opt)
@@ -293,10 +296,13 @@ long parameterList::getLong(string name, bool opt)
   std::vector<parameter>::const_iterator it;
 
   it = find_if(_param_merg.begin(), _param_merg.end(), mycmp);
-  if (it == _param_merg.end() && !opt)
+  if (it == _param_merg.end())
   {
-    std::cerr << " Parameter " << name << " not found in the " << list_name << " nor " << defu_name << " files" << std::endl;
-    exit(-1);
+    if(!opt)
+    {
+      std::cerr << " Parameter " << name << " not found in the " << list_name << " nor " << defu_name << " files" << std::endl;
+      exit(-1);
+    }
   }
   else if (it->_type != "long")
   {
@@ -308,8 +314,8 @@ long parameterList::getLong(string name, bool opt)
     //Reading default param
     stringstream bla(it->_value);
     bla >> blub;
-    return blub;
   };
+  return blub;
 };
 
 string parameterList::getString(string name, bool opt)
@@ -319,10 +325,13 @@ string parameterList::getString(string name, bool opt)
   std::vector<parameter>::const_iterator it;
 
   it = find_if(_param_merg.begin(), _param_merg.end(), mycmp);
-  if (it == _param_merg.end() && !opt)
+  if (it == _param_merg.end())
   {
-    std::cerr << " Parameter " << name << " not found in the " << list_name << " nor " << defu_name << " files" << std::endl;
-    exit(-1);
+    if(!opt)
+    {
+      std::cerr << " Parameter " << name << " not found in the " << list_name << " nor " << defu_name << " files" << std::endl;
+      exit(-1);
+    }
   }
   else if (it->_type != "string")
   {
@@ -334,8 +343,8 @@ string parameterList::getString(string name, bool opt)
     //Reading default param
     stringstream bla(it->_value);
     bla >> blub;
-    return blub;
   };
+  return blub;
 };
 
 bool parameterList::getBool(string name, bool opt)
@@ -346,10 +355,13 @@ bool parameterList::getBool(string name, bool opt)
   std::vector<parameter>::const_iterator it;
 
   it = find_if(_param_merg.begin(), _param_merg.end(), mycmp);
-  if (it == _param_merg.end() && !opt)
+  if (it == _param_merg.end())
   {
-    std::cerr << " Parameter " << name << " not found in the " << list_name << " nor " << defu_name << " files" << std::endl;
-    exit(-1);
+    if(!opt)
+    {
+      std::cerr << " Parameter " << name << " not found in the " << list_name << " nor " << defu_name << " files" << std::endl;
+      exit(-1);
+    }
   }
   else if (it->_type != "bool")
   {
@@ -361,8 +373,8 @@ bool parameterList::getBool(string name, bool opt)
     //Reading default param
     stringstream bla(it->_value);
     bla >> blub;
-    return blub;
   };
+  return blub;
 };
 
 ///opt indicates whether the parameter is optional
@@ -373,10 +385,13 @@ std::vector<double> parameterList::getVectorDouble(string name, bool opt)
   std::vector<parameter>::const_iterator it;
 
   it = find_if(_param_merg.begin(), _param_merg.end(), mycmp);
-  if (it == _param_merg.end() && !opt)
+  if (it == _param_merg.end())
   {
-    std::cerr << " Parameter " << name << " not found in the " << list_name << " nor " << defu_name << " files" << std::endl;
-    exit(-1);
+    if(!opt)
+    {
+      std::cerr << " Parameter " << name << " not found in the " << list_name << " nor " << defu_name << " files" << std::endl;
+      exit(-1);
+    }
   }
   else if (it->_type != "double")
   {
@@ -405,10 +420,13 @@ std::vector<long> parameterList::getVectorLong(string name, bool opt)
   std::vector<parameter>::const_iterator it;
 
   it = find_if(_param_merg.begin(), _param_merg.end(), mycmp);
-  if (it == _param_merg.end() && !opt)
+  if (it == _param_merg.end())
   {
-    std::cerr << " Parameter " << name << " not found in the " << list_name << " nor " << defu_name << " files" << std::endl;
-    exit(-1);
+    if(!opt)
+    {
+      std::cerr << " Parameter " << name << " not found in the " << list_name << " nor " << defu_name << " files" << std::endl;
+      exit(-1);
+    }
   }
   else if (it->_type != "long")
   {
@@ -422,6 +440,7 @@ std::vector<long> parameterList::getVectorLong(string name, bool opt)
     stringstream bla(it->_value);
     while (bla >> d)
     {
+      cout << "long: " << d;
       blub.push_back(d);
     }
   };
