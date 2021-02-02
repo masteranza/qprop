@@ -76,21 +76,28 @@ int main(int argc, char **argv)
     staticpot.calculate_staticpot(g, hamilton);
     if (target_energy != 0.0)
     {
+        if (target_energy > 0.0)
+        {
+        logAdd("   Error: target-energy should be negative!\n");    
+            exit(-1);
+        }
         int max_tries=1000;
         logAdd("   Looking for appropriate nuclear_charge given the target_energy=%e\n", target_energy);
         
         int prec=getRequiredPrecision(target_energy);
         logAdd("   The error should be smaller than: %e\n",pow(10.0, -prec));
+        
+        
         while (abs(E_tot - target_energy) > pow(10.0, -prec) && max_tries--)
         {
-            E_tot = 0.0;
+            E_tot = 0.0;   
             acc = 1.0;
             long ts = 0;
             //We need to reinit those each time
             configPotentials();
             hamilton.init(g, always_zero2, always_zero2, always_zero2, std::ref(*scalarpotx), std::ref(*imaginarypot));
             staticpot.calculate_staticpot(g, hamilton);
-            logAdd("   Current nuclear_charge=%e, tries left=%d\n", nuclear_charge,max_tries);
+            
             logAdd("%7s/%7s%25s%25s\n", "STEP", "TOTAL", "ENERGY", "ACCURACY");
             
             while (acc > target_accuracy && ts < max_steps)
@@ -111,11 +118,12 @@ int main(int argc, char **argv)
                 ts++;
             };
             logAdd("%7ld/%7ld%25.15e%25.15e\n", ts, max_steps, E_tot, acc);
+            logAdd("   Current nuclear_charge=%e, diff=%e, tries left=%d\n", nuclear_charge,abs(E_tot -target_energy) ,max_tries);
             // Not going straight with the analytical formula as on grid we could overshoot
             // Taking 2/3 of the step instead
             nuclear_charge *= (2.0 * sqrt(abs(target_energy/E_tot)) + 1.0)/3.0;
         };
-        logAdd("   Found best nuclear_charge=%e yielding energy=%e (diff=%e)\n\n", nuclear_charge, E_tot, target_energy - E_tot);
+        logAdd("   Found best nuclear_charge=%e yielding energy=%e (diff=%e)\n\n", nuclear_charge, E_tot, abs(target_energy - E_tot));
     }
 
     logPotential(hamilton);
