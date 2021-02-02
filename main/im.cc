@@ -78,8 +78,10 @@ int main(int argc, char **argv)
     {
         int max_tries=1000;
         logAdd("   Looking for appropriate nuclear_charge given the target_energy=%e\n", target_energy);
-        logAdd("   The error should be smaller than: %e\n",pow(10.0, -1.0+log10(abs(target_energy))));
-        while (abs(E_tot - target_energy) > pow(10.0, (int) -2.0+log10(abs(target_energy))) && max_tries--)
+        
+        int prec=getRequiredPrecision(target_energy);
+        logAdd("   The error should be smaller than: %e\n",pow(10.0, -prec));
+        while (abs(E_tot - target_energy) > pow(10.0, -prec) && max_tries--)
         {
             E_tot = 0.0;
             acc = 1.0;
@@ -88,7 +90,7 @@ int main(int argc, char **argv)
             configPotentials();
             hamilton.init(g, always_zero2, always_zero2, always_zero2, std::ref(*scalarpotx), std::ref(*imaginarypot));
             staticpot.calculate_staticpot(g, hamilton);
-            logAdd("   Current nuclear_charge=%e potent=%e\n", nuclear_charge, hamilton.scalarpot(1.0, l_qnumber, 1.0, 0.0, 0.0));
+            logAdd("   Current nuclear_charge=%e, tries left=%d\n", nuclear_charge,max_tries);
             logAdd("%7s/%7s%25s%25s\n", "STEP", "TOTAL", "ENERGY", "ACCURACY");
             
             while (acc > target_accuracy && ts < max_steps)
@@ -112,7 +114,6 @@ int main(int argc, char **argv)
             // Not going straight with the analytical formula as on grid we could overshoot
             // Taking 2/3 of the step instead
             nuclear_charge *= (2.0 * sqrt(abs(target_energy/E_tot)) + 1.0)/3.0;
-            sleep(1.0);
         };
         logAdd("   Found best nuclear_charge=%e yielding energy=%e (diff=%e)\n\n", nuclear_charge, E_tot, target_energy - E_tot);
     }

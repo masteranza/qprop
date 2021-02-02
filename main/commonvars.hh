@@ -4,6 +4,8 @@
 // By default the filename strings contain extra 0 pading for n,l,m numbers (for two digit numbers).
 // If you don't like that, set the following flag to "" (empty string)
 #define STATE_NAME_PADDING ".2"
+// Used to increase the accuracy of target-energy found automatically in IM
+#define IM_EXTRA_PRECISION 1
 // TODO: Add optional colored output (someday)
 // #define RESET   "\033[0m"
 // #define BLACK   "\033[30m"      /* Black */
@@ -31,6 +33,7 @@
 #include <ctime>
 #include <stdarg.h>
 #include <stdio.h>
+#include <string.h>
 #include <getopt.h>
 //Femtosecond is this many atomic units
 const double fs = 41.34138;
@@ -332,6 +335,19 @@ void configVars()
   //Inits all filenames used in ./im; ./re; ./isurfv; ./tsurff
   initFilenames();
 }
+
+int getRequiredPrecision(double number)
+{
+  std::stringstream sstream;
+  sstream << number;
+  int i=0, L;
+  string ss=sstream.str();
+  L=ss.length();
+  while(ss[i]!='.') 
+    i++;
+  return L-i-1 + IM_EXTRA_PRECISION;
+}
+
 void logVecpot(const vecpot *fpx,
                const vecpot *fpy,
                const vecpot *fpz, int lno_of_ts)
@@ -387,7 +403,7 @@ void logSilent(grid &g)
 {
   //TODO: In future this will be the only thing done by logSilent
   para->copyMergedParamFileTo(dir_name + "/merged_"+conf_file + confext);
-  
+
   if (file_log == NULL)
     return;
 #ifdef IM
