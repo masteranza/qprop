@@ -33,7 +33,7 @@ hhg=0
 laser=0
 pes=0
 wf=0
-
+auto=1
 index=1
 declare -i index
 special=0
@@ -132,6 +132,11 @@ while [[ $# -gt 0 && $index -eq $# || $index -lt $# ]]; do
         [[ $index -gt 1 ]] && echo "$err_arg_order -special $before_str" && exit 1
         special=1
         ;;
+    # -auto | --auto)
+    #     shift
+    #     [[ $index -gt 1 ]] && echo "$err_arg_order -auto $before_str" && exit 1
+    #     auto=1
+    #     ;;
     -from | --from)
         shift
         [[ $index -gt 1 ]] && echo "$err_arg_order -from $before_str" && exit 1
@@ -162,7 +167,7 @@ while [[ $# -gt 0 && $index -eq $# || $index -lt $# ]]; do
         ;;
     -plot | --plot)
         shift
-        [[ $index -gt 1 ]] && echo "$err_str -action $before_str" && exit 1
+        [[ $index -gt 1 ]] && echo "$err_str -plot $before_str" && exit 1
         # if [[ $1 =~ "u" || $1 =~ "r" || $1 =~ "v" || $1 =~ "d" || $1 =~ "c" || $1 =~ "s" ]]; then
         if [[ $1 =~ "h" ]]; then
             hhg=1
@@ -239,8 +244,9 @@ if [[ $proc -gt 0 ]]; then
 fi
 
 if [[ "$mk" != "" ]]; then
-    echo "${INFC}Shell:${NC} $SHELL"
-    echo "${INFC}Path variable:${NC} $PATH"
+    # echo "${INFC}Shell:${NC} $SHELL"
+    # echo "${INFC}Path variable:${NC} $PATH"
+    echo "${INFC}Compiling project ${GREEN}$proj${NC}"
     $cmd make proj=$proj $mk
 fi
 [[ "$mk" = "clean" ]] && exit 0
@@ -248,11 +254,18 @@ fi
 #FIXME: LATER
 [[ "$from" = "tsurff" && "$upto" = "isurfv" ]] && echo "$err_str conflicting -from $from and -upto $upto" && exit 1
 
+if [[ "$from" != "im" &&  "$from" != "" ]]; then
+    auto=0
+    echo "${INFC}Not starting from im, ./auto will not be executed${NC}"
+fi
+
 if [[ $special = 1 ]]; then
     $cmd ./projects/$proj/run $@
 else
     echo "${INFC}Moving to directory: ${GREEN}projects/$proj${NC}"
     cd projects/$proj
+    
+    [[ $auto = 1 ]] && (compiledQ auto) && $cmd ./auto $@
 
     [[ "$from" == "im" ]] && if [[ $maxnqnumber = 1 ]]; then
         (compiledQ im) && $cmd ./im $@

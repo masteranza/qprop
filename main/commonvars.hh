@@ -25,7 +25,6 @@
 // #define BOLDCYAN    "\033[1m\033[36m"      /* Bold Cyan */
 // #define BOLDWHITE   "\033[1m\033[37m"      /* Bold White */
 
-
 #define STRINGIFY_(x) #x
 #define STRINGIFY(x) STRINGIFY_(x)
 #include <smallHelpers.hh>
@@ -68,10 +67,11 @@ string im_extraid = "";
 string re_extraid = "";
 string im_str_common, str_max_n_qnumber, str_l_qnumber, str_m_qnumber, str_initial_n, str_initial_l, str_initial_m;
 string im_fname_wfs[100];
-string im_fname_log, re_fname_log, is_fname_log, ts_fname_log;
+string auto_fname_log, im_fname_log, re_fname_log, is_fname_log, ts_fname_log;
 string im_fname_potential, re_fname_observer, re_fname_wf, re_fname_vpotential;
-string re_fname_wfsnap, re_fname_wffinal, re_fname, ts_fname, is_fname;
+string re_fname_wfsnap, re_fname_wffinal, auto_fname, re_fname, ts_fname, is_fname;
 //Prefixes for different routines
+string auto_prefix("/auto");
 string re_prefix("/re");
 string im_prefix("/im");
 string tsurff_prefix("/ts");
@@ -130,7 +130,7 @@ void logAdd(char const *fmt, ...)
 //TODO: INIT only what's really needed.
 void loadParams(string conf_file, string defu_file)
 {
-  
+
   para = new parameterList(this_dir + conf_file + confext, this_dir + defu_file + confext);
   //EXPERIMENT META
   exp_name = para->getString("exp-name", true);
@@ -151,7 +151,13 @@ void loadParams(string conf_file, string defu_file)
   nuclear_charge = para->getDouble("nuclear-charge");
   max_n_number = para->getLong("max-n-qnumber");
   l_qnumber = para->getLong("l-qnumber");
+#ifdef AUTO
+  logAdd("   Warning: Resetting max_n_number=1, l_qnumber=0 for ./auto - make sure this is intended.\n");
+  max_n_number = 1;
+  l_qnumber = 0;
+#endif
   m_qnumber = para->getLong("m-qnumber");
+
   re_initial_n = para->getLong("initial-n");
   re_initial_l = para->getLong("initial-l");
   re_initial_m = para->getLong("initial-m");
@@ -237,7 +243,7 @@ string str_nuclear_charge()
 }
 void initCommonStrings()
 {
-  char dest_string[4];
+  char dest_string[5];
   sprintf(dest_string, "-n%" STATE_NAME_PADDING "d", max_n_number);
   str_max_n_qnumber = to_string(dest_string);
   sprintf(dest_string, "-l%" STATE_NAME_PADDING "d", l_qnumber);
@@ -254,8 +260,12 @@ void initCommonStrings()
 
 void initFilenames()
 {
+  auto_fname = auto_prefix + im_extraid;
+  auto_fname_log = auto_fname + string(".log");
+
   im_str_common = im_prefix + im_extraid + str_max_n_qnumber + str_l_qnumber + str_m_qnumber;
   im_fname_log = im_str_common + string(".log");
+
   im_fname_potential = im_str_common + string("-potential.dat");
   for (int nr1 = 0; nr1 < max_n_number - l_qnumber; nr1++)
   {
@@ -340,12 +350,12 @@ int getRequiredPrecision(double number)
 {
   std::stringstream sstream;
   sstream << number;
-  int i=0, L;
-  string ss=sstream.str();
-  L=ss.length();
-  while(ss[i]!='.') 
+  int i = 0, L;
+  string ss = sstream.str();
+  L = ss.length();
+  while (ss[i] != '.')
     i++;
-  return L-i-1 + IM_EXTRA_PRECISION;
+  return L - i - 1 + IM_EXTRA_PRECISION;
 }
 
 void logVecpot(const vecpot *fpx,
@@ -402,7 +412,6 @@ void logConfig()
 void logSilent(grid &g)
 {
   //TODO: In future this will be the only thing done by logSilent
-  para->copyMergedParamFileTo(dir_name + "/merged_"+conf_file + confext);
 
   if (file_log == NULL)
     return;
@@ -631,9 +640,9 @@ int processOptions(int argc, char *argv[])
 
   const char *const short_opts = "hve:Z:N:L:M:G:n:l:m:g:y:r:t:i:d:D:o:O:C:U:";
   //Check if new conf and default conf files were passed
-  
+
   getCustomConfig(argc, argv, long_opts, short_opts);
-  
+
   //Initialize conf files
   loadParams(conf_file, defu_file);
   //To reload getopt_long
@@ -661,88 +670,90 @@ int processOptions(int argc, char *argv[])
       break;
     case 'v': // -h or --help
       verbose = 1;
-      addCmdLineNotes("Verbose mode on");
+      para->updateMergedParamField(string(long_opts[1].name), string(optarg), "bool");
       break;
     case 'e':
       exp_name = string(optarg);
-      addCmdLineNotes(str_ovr + string(long_opts[2].name) + " = " + string(optarg));
+      para->updateMergedParamField(string(long_opts[2].name), string(optarg));
+      // addCmdLineNotes(str_ovr + string(long_opts[2].name) + " = " + string(optarg));
       break;
     case 'Z':
       nuclear_charge = stof(optarg);
-      addCmdLineNotes(str_ovr + string(long_opts[3].name) + " = " + string(optarg));
+      para->updateMergedParamField(string(long_opts[3].name), string(optarg));
+      // addCmdLineNotes(str_ovr + string(long_opts[3].name) + " = " + string(optarg));
       // cout << str_ovr << long_opts[3].name << " = " << optarg << endl;
       break;
     case 'N':
       max_n_number = stoi(optarg);
-      addCmdLineNotes(str_ovr + string(long_opts[4].name) + " = " + string(optarg));
+      para->updateMergedParamField(string(long_opts[4].name), string(optarg));
       break;
     case 'L':
       l_qnumber = stoi(optarg);
-      addCmdLineNotes(str_ovr + string(long_opts[5].name) + " = " + string(optarg));
+      para->updateMergedParamField(string(long_opts[5].name), string(optarg));
       break;
     case 'M':
       m_qnumber = stoi(optarg);
-      addCmdLineNotes(str_ovr + string(long_opts[6].name) + " = " + string(optarg));
+      para->updateMergedParamField(string(long_opts[6].name), string(optarg));
       break;
     case 'G':
       im_radial_grid_size = stof(optarg);
-      addCmdLineNotes(str_ovr + string(long_opts[7].name) + " = " + string(optarg));
+      para->updateMergedParamField(string(long_opts[6].name), string(optarg));
       break;
     case 'n':
       re_initial_n = stoi(optarg);
-      addCmdLineNotes(str_ovr + string(long_opts[8].name) + " = " + string(optarg));
+      para->updateMergedParamField(string(long_opts[8].name), string(optarg));
       break;
     case 'l':
       re_initial_l = stoi(optarg);
-      addCmdLineNotes(str_ovr + string(long_opts[9].name) + " = " + string(optarg));
+      para->updateMergedParamField(string(long_opts[9].name), string(optarg));
       break;
     case 'm':
       re_initial_m = stoi(optarg);
-      addCmdLineNotes(str_ovr + string(long_opts[10].name) + " = " + string(optarg));
+      para->updateMergedParamField(string(long_opts[10].name), string(optarg));
       break;
     case 'g':
       re_radial_grid_size = stof(optarg);
-      addCmdLineNotes(str_ovr + string(long_opts[11].name) + " = " + string(optarg));
+      para->updateMergedParamField(string(long_opts[11].name), string(optarg));
       break;
     case 'y':
       re_l_grid_size = stoi(optarg);
-      addCmdLineNotes(str_ovr + string(long_opts[12].name) + " = " + string(optarg));
+      para->updateMergedParamField(string(long_opts[12].name), string(optarg));
       break;
     case 'r':
       delta_r = stof(optarg);
-      addCmdLineNotes(str_ovr + string(long_opts[13].name) + " = " + string(optarg));
+      para->updateMergedParamField(string(long_opts[13].name), string(optarg));
       break;
     case 't':
       dt = stof(optarg);
-      addCmdLineNotes(str_ovr + string(long_opts[14].name) + " = " + string(optarg));
+      para->updateMergedParamField(string(long_opts[14].name), string(optarg));
       break;
     case 'i':
       intensity_mult = stof(optarg);
-      addCmdLineNotes(str_ovr + string(long_opts[15].name) + " = " + string(optarg));
+      para->updateMergedParamField(string(long_opts[15].name), string(optarg));
       break;
     case 'd':
       delay1 = stof(optarg);
-      addCmdLineNotes(str_ovr + string(long_opts[16].name) + " = " + string(optarg));
+      para->updateMergedParamField(string(long_opts[16].name), string(optarg));
       break;
     case 'D':
       delay2 = stof(optarg);
-      addCmdLineNotes(str_ovr + string(long_opts[17].name) + " = " + string(optarg));
+      para->updateMergedParamField(string(long_opts[17].name), string(optarg));
       break;
     case 'o':
       omega1 = stof(optarg);
-      addCmdLineNotes(str_ovr + string(long_opts[18].name) + " = " + string(optarg));
+      para->updateMergedParamField(string(long_opts[18].name), string(optarg));
       break;
     case 'O':
       omega2 = stof(optarg);
-      addCmdLineNotes(str_ovr + string(long_opts[19].name) + " = " + string(optarg));
+      para->updateMergedParamField(string(long_opts[19].name), string(optarg));
       break;
     case 'x':
       im_extraid = string(optarg);
-      addCmdLineNotes(str_ovr + string(long_opts[20].name) + " = " + string(optarg));
+      para->updateMergedParamField(string(long_opts[20].name), string(optarg), string("string"));
       break;
     case 'X':
       re_extraid = string(optarg);
-      addCmdLineNotes(str_ovr + string(long_opts[21].name) + " = " + string(optarg));
+      para->updateMergedParamField(string(long_opts[21].name), string(optarg), string("string"));
       break;
     case ':':
       addCmdLineNotes("Possible problem ':' recieved");

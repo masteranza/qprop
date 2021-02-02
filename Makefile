@@ -8,9 +8,12 @@ endif
 
 options=-DPROJNAME=$(proj) -Imain -Iprojects/$(proj) -Ibase -lqprop -lm -Llib/x86_64
 
-all: im re isurfv tsurff tsurff-mpi
+all: auto im re isurfv tsurff tsurff-mpi
 
-im : libqprop.a main/im.cc
+auto : libqprop.a main/auto.cc
+	$(compiler) $(optimargs) main/auto.cc -o projects/$(proj)/auto $(options)
+
+im : auto libqprop.a main/im.cc
 	$(compiler) $(optimargs) main/im.cc -o projects/$(proj)/im $(options)
 
 re : libqprop.a main/re.cc

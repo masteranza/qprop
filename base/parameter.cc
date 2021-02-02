@@ -5,10 +5,45 @@ parameterList::parameterList(){
 
 };
 
+void parameterList::updateMergedParamField(string name, string value, string type)
+{
+  std::vector<parameter>::iterator it2;
+  compareNameWith mycmp2(name);
+  it2 = find_if(_param_merg.begin(), _param_merg.end(), mycmp2);
+  if (it2 == _param_merg.end())
+  {
+    if (type == "")
+    {
+      cout << "Type of parameter " << name << " must be set before hand!";
+      exit(-1);
+    }
+    paramNotes.push_back(new_string + name + " = " + value);
+    _param_merg.push_back(parameter(name, type, value));
+  }
+  else if (it2->_type != type && type != "")
+  {
+    cout << "Type of parameter " << name << " (" << type << ") not equal to the type found in " << defu_name;
+    exit(-1);
+  }
+  else
+  {
+    if (type == "")
+      type = it2->_type;
+
+    if (it2->_value != value)
+    {
+      paramNotes.push_back(ovr_string + name + " = " + value);
+    }
+
+    *it2 = parameter(name, type, value);
+    paramNotes.push_back(ovr_string + name + " = " + value);
+  }
+}
+
 ///reads from file file_name
 parameterList::parameterList(string file_name, string defaults_name)
 {
-  
+
   // paramNotes.push_back("test");
   std::ifstream inputd(defaults_name.c_str());
   if (!inputd)
@@ -34,6 +69,7 @@ parameterList::parameterList(string file_name, string defaults_name)
 
   char line[1024];
   if (def_loaded)
+  {
     while (inputd.getline(line, 1024))
     {
       // strip comments from line
@@ -61,7 +97,7 @@ parameterList::parameterList(string file_name, string defaults_name)
         string name, type, value;
 
         // For parsing vectors (after all # comments are removed)
-        in_stream >> name >> type ;
+        in_stream >> name >> type;
         getline(in_stream, value);
         in_stream.ignore();
 
@@ -93,7 +129,7 @@ parameterList::parameterList(string file_name, string defaults_name)
         in_stream >> name >> type;
         trim(name);
         trim(type);
-        
+
         if (type == "string")
         {
           compareNameWith mycmp(name);
@@ -114,6 +150,8 @@ parameterList::parameterList(string file_name, string defaults_name)
         paramNotes.push_back(string(strline) + " is not a well formed entry in " + defu_name + " and will be discarded");
       };
     };
+    inputd.close();
+  }
 
   while (input.getline(line, 1024))
   {
@@ -148,13 +186,13 @@ parameterList::parameterList(string file_name, string defaults_name)
       trim(name);
       trim(type);
       trim(value);
-  
+
       // find out if name was used more than once
       compareNameWith mycmp(name);
       std::vector<parameter>::iterator it;
       it = find_if(_param_list.begin(), _param_list.end(), mycmp);
       if (it != _param_list.end())
-      {        
+      {
         paramNotes.push_back(name + " appears more than once in parameter file: " + list_name);
       }
       else
@@ -191,7 +229,7 @@ parameterList::parameterList(string file_name, string defaults_name)
     }
     else if (num_entries == 2) //Special treatment
     {
-      
+
       std::istringstream in_stream(strline);
       string name, type, value;
 
@@ -213,13 +251,12 @@ parameterList::parameterList(string file_name, string defaults_name)
           std::vector<parameter>::iterator it2;
           compareNameWith mycmp2(name);
           it2 = find_if(_param_merg.begin(), _param_merg.end(), mycmp2);
-          
+
           if (it2 == _param_merg.end())
           {
             paramNotes.push_back(new_string + name + " = " + "");
             _param_list.push_back(parameter(name, type, ""));
             _param_merg.push_back(parameter(name, type, ""));
-    
           }
           else if (it2->_type != type)
           {
@@ -240,7 +277,72 @@ parameterList::parameterList(string file_name, string defaults_name)
       paramNotes.push_back(string(strline) + " is not a well formed entry in " + list_name + " and will be discarded");
     };
   };
+  input.close();
 };
+
+void parameterList::updateParamFileField(string fieldName, string value)
+{
+  updateMergedParamField(fieldName, value);
+
+  string tmp("tmp");
+  std::fstream fs;
+  fs.open((list_name).c_str(), std::fstream::in);
+  if (!fs)
+  {
+    cout << "Error opening " << (list_name).c_str() << endl;
+    exit(-1);
+  }
+  std::fstream fs2;
+  fs2.open((list_name + tmp).c_str(), std::fstream::out);
+  if (!fs2)
+  {
+    cout << "Error opening " << (list_name + tmp).c_str() << endl;
+    exit(-1);
+  }
+
+  string strTemp;
+  int found = 0;
+  char line[1024];
+  while (fs.getline(line, 1024))
+  {
+    string strline(line);
+    if (strline.find(fieldName) != std::string::npos && strline[0] != '#')
+    {
+      int length = strline.length();
+      int element = 0;
+      int prev = (int)' ';
+      for (int i = 0; i < length; i++)
+      {
+        int c = strline[i];
+        if (!isspace(c) && isspace(prev))
+          element++;
+        if (element == 3)
+        {
+          fs2 << strline.substr(0, i) << value << " # (auto)" << endl;
+          // cout << strline.substr(0, i) << value << " # (auto)" << endl;
+
+          break;
+        }
+        prev = c;
+      }
+    }
+    else
+    {
+      fs2 << line << endl;
+      // cout << line << endl;
+    }
+  }
+  if (remove((list_name).c_str()) != 0)
+  {
+    cout << "Error removing the (old) config file: " << (list_name).c_str();
+    exit(-1);
+  }
+  if (rename((list_name + tmp).c_str(), (list_name).c_str()) != 0)
+  {
+    cout << "Error renaming the new config file from: " << (list_name + tmp).c_str() << " to " << (list_name).c_str();
+    exit(-1);
+  }
+}
 
 void parameterList::copyMergedParamFileTo(string filepath)
 {
@@ -269,7 +371,7 @@ double parameterList::getDouble(string name, bool opt /*= false*/)
   it = find_if(_param_merg.begin(), _param_merg.end(), mycmp);
   if (it == _param_merg.end())
   {
-    if(!opt)
+    if (!opt)
     {
       std::cerr << " Parameter " << name << " not found in the " << list_name << " nor " << defu_name << " files" << std::endl;
       exit(-1);
@@ -298,7 +400,7 @@ long parameterList::getLong(string name, bool opt)
   it = find_if(_param_merg.begin(), _param_merg.end(), mycmp);
   if (it == _param_merg.end())
   {
-    if(!opt)
+    if (!opt)
     {
       std::cerr << " Parameter " << name << " not found in the " << list_name << " nor " << defu_name << " files" << std::endl;
       exit(-1);
@@ -327,7 +429,7 @@ string parameterList::getString(string name, bool opt)
   it = find_if(_param_merg.begin(), _param_merg.end(), mycmp);
   if (it == _param_merg.end())
   {
-    if(!opt)
+    if (!opt)
     {
       std::cerr << " Parameter " << name << " not found in the " << list_name << " nor " << defu_name << " files" << std::endl;
       exit(-1);
@@ -357,7 +459,7 @@ bool parameterList::getBool(string name, bool opt)
   it = find_if(_param_merg.begin(), _param_merg.end(), mycmp);
   if (it == _param_merg.end())
   {
-    if(!opt)
+    if (!opt)
     {
       std::cerr << " Parameter " << name << " not found in the " << list_name << " nor " << defu_name << " files" << std::endl;
       exit(-1);
@@ -387,7 +489,7 @@ std::vector<double> parameterList::getVectorDouble(string name, bool opt)
   it = find_if(_param_merg.begin(), _param_merg.end(), mycmp);
   if (it == _param_merg.end())
   {
-    if(!opt)
+    if (!opt)
     {
       std::cerr << " Parameter " << name << " not found in the " << list_name << " nor " << defu_name << " files" << std::endl;
       exit(-1);
@@ -422,7 +524,7 @@ std::vector<long> parameterList::getVectorLong(string name, bool opt)
   it = find_if(_param_merg.begin(), _param_merg.end(), mycmp);
   if (it == _param_merg.end())
   {
-    if(!opt)
+    if (!opt)
     {
       std::cerr << " Parameter " << name << " not found in the " << list_name << " nor " << defu_name << " files" << std::endl;
       exit(-1);

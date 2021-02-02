@@ -7,6 +7,7 @@
 #include <vector>
 #include <algorithm>
 #include <iostream>
+#include <fstream>
 
 using std::cerr;
 using std::cout;
@@ -31,22 +32,19 @@ struct compareNameWith : public std::unary_function<parameter, bool>
   string _name;
   bool operator()(parameter cmp) { return (cmp._name == _name); };
 };
-static inline string trim(std::string &s) 
+static inline string trim(std::string &s)
 {
-    s.erase(s.begin(), std::find_if(s.begin(), s.end(),
-            std::not1(std::ptr_fun<int, int>(std::isspace))));
-    s.erase(std::find_if(s.rbegin(), s.rend(),
-            std::not1(std::ptr_fun<int, int>(std::isspace))).base(), s.end());
-    return s;
+  s.erase(s.begin(), std::find_if(s.begin(), s.end(), std::not1(std::ptr_fun<int, int>(std::isspace))));
+  s.erase(std::find_if(s.rbegin(), s.rend(), std::not1(std::ptr_fun<int, int>(std::isspace))).base(), s.end());
+  return s;
 }
-
-
 
 ///Class for reading parameters from a file.
 class parameterList
 {
   std::string ovr_string = "Default parameter override with ";
   std::string new_string = "New parameter initialized with ";
+  std::string term_string = "Terminal parameter override with ";
   std::vector<parameter> _param_list;
   // std::vector<parameter> _param_defu;
   std::vector<parameter> _param_merg;
@@ -61,11 +59,13 @@ public:
   // void setDouble(string file_name, string name, double value);
   double getDouble(string name, bool opt = false);
   string getString(string name, bool opt = false);
-  long getLong(string name, bool opt= false);
-  bool getBool(string name, bool opt =false);
-  std::vector<double> getVectorDouble(string name, bool opt= false);
-  std::vector<long> getVectorLong(string name, bool opt =false);
+  long getLong(string name, bool opt = false);
+  bool getBool(string name, bool opt = false);
+  std::vector<double> getVectorDouble(string name, bool opt = false);
+  std::vector<long> getVectorLong(string name, bool opt = false);
   void copyMergedParamFileTo(string filepath);
+  void updateMergedParamField(string fieldName, string value, string type = "");
+  void updateParamFileField(string fieldName, string value);
 };
 
 #endif
