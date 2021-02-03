@@ -147,7 +147,7 @@ In this case you'd need to create a repository containing your `config.param` an
   ```
     vecpot_x = new Zero_vecpot();
     vecpot_y = new Zero_vecpot();
-    vecpot_z = new SinEnvSin2_vecpot(omega1, n1z, mult * E1z, phase1z);
+    vecpot_z = new SinEnvSin2_vecpot(omega1, n1z, E_mult * E1z, phase1z);
   ```
 
   - Notice how C++ variables correspond to their `.param` counterparts, only exchanging `-` for `_`.

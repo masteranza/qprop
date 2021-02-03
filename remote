@@ -172,7 +172,7 @@ while [[ $# -gt 0 && $index -eq $# || $index -lt $# ]]; do
 done
 
 if [[ $gitrefresh = 1 ]]; then
-        git submodule foreach 'git add . && git diff-index --quiet HEAD || git commit -m "test change"'
+        git submodule foreach 'git add . && git diff-index --quiet HEAD || git commit -m "autom remote submodule commit"'
         git add . && git diff-index --quiet HEAD || (git commit -m "auto remote commit" && echo "${GREEN}Auto-commit${NC}")
         git push --recurse-submodules=on-demand && echo "${GREEN}Repo pushed to remote${NC}"
         # git diff-index --quiet HEAD || (git commit -m "auto remote commit" && git push && echo "${GREEN}Repo pushed from local${NC}")

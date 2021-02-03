@@ -69,11 +69,11 @@ void configPotentials()
 void configPulse()
 {
   //Look into potentials.hh to find predefined vecpot-derived classes.
-  // vecpot_x = Two_vectpot(omega1, omega2, n1x, n2x, delay1, delay2, mult * E1x, mult * E2x, phase1x, phase2x);
-  // vecpot_y = Two_vectpot(omega1, omega2, n1y, n2y, delay1, delay2, mult * E1y, mult * E2y, phase1y, phase2y);
+  // vecpot_x = Two_vectpot(omega1, omega2, n1x, n2x, delay1, delay2, E_mult * E1x, E_mult * E2x, phase1x, phase2x);
+  // vecpot_y = Two_vectpot(omega1, omega2, n1y, n2y, delay1, delay2, E_mult * E1y, E_mult * E2y, phase1y, phase2y);
   vecpot_x = new Zero_vecpot();
   vecpot_y = new Zero_vecpot();
-  vecpot_z = new SinEnvSin2_vecpot(omega1, n1z, delay1, mult * E1z, phase1z);
+  vecpot_z = new SinEnvSin2_vecpot(omega1, n1z, delay1, E_mult * E1z, phase1z);
 
   pulse_duration = (qprop_dim == 34) ? vecpot_z->get_duration() : max(vecpot_x->get_duration(), vecpot_y->get_duration());
   duration = pulse_duration + additional_time;

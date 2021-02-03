@@ -102,7 +102,7 @@ long re_l_grid_size, imag_width_ngps;
 
 //LASER
 double E1x, E2x, E1y, E2y, E1z, E2z, n1x, n2x, n1y, n2y, n1z, n2z, delay1, delay2, omega1, omega2;
-double phase1x, phase1y, phase1z, phase2x, phase2y, phase2z, intensity_mult, mult, pulse_duration, duration;
+double phase1x, phase1y, phase1z, phase2x, phase2y, phase2z, intensity_mult, E_mult, pulse_duration, duration;
 //Other derived parameters
 double quiver_amplitude, gamma_K, U_p, I_p;
 vecpot *vecpot_x;
@@ -322,7 +322,7 @@ void configVars()
   // Width of the imaginary potential in grid points
   imag_width_ngps = long(imag_width / delta_r);
   //Intensity multipliers recalculated for electric field multiplier
-  mult = sqrt(intensity_mult);
+  E_mult = sqrt(intensity_mult);
   //If we do wf snapshots we certainly want the final wf as well
   if (wf_log_interval > 0)
     finalwf_log = true;

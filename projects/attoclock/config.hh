@@ -33,8 +33,8 @@ void configPotentials()
 void configPulse()
 {
   //initialize vector potentials
-  vecpot_x = new SinEnvSin2_vecpot(omega1, n1x, delay1, mult * E1x, phase1x);
-  vecpot_y = new SinEnvSin2_vecpot(omega1, n1y, delay1, mult * E1y, phase1y);
+  vecpot_x = new SinEnvSin2_vecpot(omega1, n1x, delay1, E_mult * E1x, phase1x);
+  vecpot_y = new SinEnvSin2_vecpot(omega1, n1y, delay1, E_mult * E1y, phase1y);
   vecpot_z = new Zero_vecpot();
 
   pulse_duration = (qprop_dim == 34) ? vecpot_z->get_duration() : max(vecpot_x->get_duration(), vecpot_y->get_duration());
