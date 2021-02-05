@@ -308,12 +308,15 @@ public:
   double operator()(double time, int me) const
   {
     double result = 0.0;
-    if (time <= 2 * 2 * M_PI / omega1)
-      result += E_1 / omega1 * pow2(sin(0.125 * omega1 * (time - delay1))) * sin(omega1 * (time - delay1) + phi_cep1);
-    else if (time < (n_c1 - 2.0) * 2 * M_PI / omega1)
-      result += E_1 / omega1 * sin(omega1 * time + phi_cep1);
-    else
-      result += E_1 / omega1 * pow2(sin(0.125 * (omega1 * time - (n_c1 - 4.0) * 2 * M_PI))) * sin(omega1 * time + phi_cep1);
+    if (E_1 != 0.0 && time >= delay1 && time <= duration1)
+    {
+      if ((time - delay1) <= 2 * 2 * M_PI / omega1)
+        result += E_1 / omega1 * pow2(sin(0.125 * omega1 * (time - delay1))) * sin(omega1 * (time - delay1) + phi_cep1);
+      else if ((time - delay1) < (n_c1 - 2.0) * 2 * M_PI / omega1)
+        result += E_1 / omega1 * sin(omega1 * time + phi_cep1);
+      else
+        result += E_1 / omega1 * pow2(sin(0.125 * (omega1 * time - (n_c1 - 4.0) * 2 * M_PI))) * sin(omega1 * time + phi_cep1);
+    }
     return result;
   };
   //TODO: Define integral() properly for this type of pulse
