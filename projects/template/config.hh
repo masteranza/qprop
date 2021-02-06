@@ -9,6 +9,9 @@
 #define MOMENTA_DATA      //Whether to save data for isurfv/tsurff
 // #define EXTRA_TIME_TSURFF_ONLY //Whether to use old tsurff approach with long propagation time
 
+// The order of the functions below represents the order in which those functions are called by the im, re, isurfv, tsurff routines.
+
+
 // Warning: getopt_long used in commonvars.hh may reorder your arguments
 // to stop this insert them after ' -- ' you can also use names but probably not getopt again.
 // Example: calling ./im with charge Z=1 and custom arguments 3.1 and 4.1 to be extracted in processCustomOptions
@@ -38,30 +41,6 @@ void configCustomVars()
   re_extraid = "-MY";
   initFilenames();
 }
-
-// This function should be used to set scalar and imaginary potentials.
-// One can use preprocessor defines to set them differently depending on routine.
-void configPotentials()
-{
-#ifdef MOMENTA_DATA
-  //To ensure that even highly excited bound states are negligable for r>R_tsurff.
-  //Also in compliance with the rule 2*R_co< R_tsurff
-  pot_cutoff = R_tsurff / 4.0;
-  scalarpotx = new CutCoulomb_scalarpot(nuclear_charge, pot_cutoff);
-#else
-  pot_cutoff = 0.0;
-  scalarpotx = new scalarpot(nuclear_charge);
-#endif
-#ifdef IM //In imaginary time propagation we (usually) don't want absorbing boundary conditions
-  imaginarypot = new imagpot(0, 0.0);
-#else               //Shared by ./re; ./isurfv, ./tsurff
-  imaginarypot = new imagpot(imag_width_ngps);
-#ifdef MOMENTA_DATA //Extending imaginary potential width for isurfv routines
-  extended_imaginarypot = new imagpot(extended_imag_width_ngps, imag_ampl);
-#endif
-#endif
-}
-
 // Here you set your vector potentials.
 // Some predefined classes can be found in main/potentials.hh
 // If you need something else entirely uncomment the code located at the bottom of this file, customize and move it to the top of the file
@@ -85,6 +64,7 @@ void configPulse()
   duration += time_surff;
 #endif
 }
+
 // This is used to set the new size of the grid in radial_grid_size
 // And the extended_grid_size for the isurfv routine
 void correctGridSize()
@@ -118,6 +98,31 @@ void correctGridSize()
 
 #endif
 }
+
+// This function should be used to set scalar and imaginary potentials.
+// One can use preprocessor defines to set them differently depending on routine.
+void configPotentials()
+{
+#ifdef MOMENTA_DATA
+  //To ensure that even highly excited bound states are negligable for r>R_tsurff.
+  //Also in compliance with the rule 2*R_co< R_tsurff
+  pot_cutoff = R_tsurff / 4.0;
+  scalarpotx = new CutCoulomb_scalarpot(nuclear_charge, pot_cutoff);
+#else
+  pot_cutoff = 0.0;
+  scalarpotx = new scalarpot(nuclear_charge);
+#endif
+#ifdef IM //In imaginary time propagation we (usually) don't want absorbing boundary conditions
+  imaginarypot = new imagpot(0, 0.0);
+#else               //Shared by ./re; ./isurfv, ./tsurff
+  imaginarypot = new imagpot(imag_width_ngps);
+#ifdef MOMENTA_DATA //Extending imaginary potential width for isurfv routines
+  extended_imaginarypot = new imagpot(extended_imag_width_ngps, imag_ampl);
+#endif
+#endif
+}
+
+
 
 //Here you can define your own custom potentials (vector,scalar and imaginary)
 //see potentials.hh to get the idea what methods need to be defined.
