@@ -515,7 +515,7 @@ private:
         psi_buffer_R.reset(new double[ell_m_grid_size * cache_size_t * 2]);
         psi_buffer_R_deriv.reset(new double[ell_m_grid_size * cache_size_t * 2]);
         if (i_proc == 0)
-            logAdd("saving the time integrals will take %ld x %ld MB of space\n", ceil(((qprop_dim == 44) ? 4 : 3) * 16.0 * num_psi_size_surff / 1048576.0), num_proc);
+            logAdd("saving the time integrals will take %d x %d MB of space\n", (int) ceil(((qprop_dim == 44) ? 4 : 3) * 16.0 * num_psi_size_surff / 1048576.0), num_proc);
     };
 
     // First process reads the data from file and broadcasts it to the rest. The buffers are necessary because not all mpi implementations know copmlex<double>.

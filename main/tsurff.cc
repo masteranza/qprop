@@ -101,7 +101,7 @@ int main(int argc, char **argv)
     sleep(0.1);
     int ierrfin = MPI_Finalize();
     logAdd("Finished on proc %d. MPI_Finalize returns %d \n", i_proc, ierrfin);
-    sleep(0.1); //To avoid printing the above after what's below
+    sleep(3.0); //To avoid printing the above after what's below
     if (i_proc == 0)
 #endif
     {
