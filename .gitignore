@@ -113,7 +113,6 @@ Temporary Items
 *.a
 *.dat
 *.log
-*.json
 *.conf
 re
 im
