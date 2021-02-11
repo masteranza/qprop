@@ -6,6 +6,8 @@
 #define STATE_NAME_PADDING ".2"
 // Used to increase the accuracy of target-energy found automatically in IM
 #define IM_EXTRA_PRECISION 1
+// If you want n,l,m state info in re filenames enable this
+// #define INCLUDE_STATE_INFO_IN_RE
 // TODO: Add optional colored output (someday)
 // #define RESET   "\033[0m"
 // #define BLACK   "\033[30m"      /* Black */
@@ -40,7 +42,8 @@ const double fs = 41.34138;
 const double unit_intensity = 3.50944e16;
 //How much information to show during run 0, 1 or higher
 int verbose = 0;
-
+//Whether to continue re from previous final wf instead of output of im routine 
+bool re_continue = 0;
 //GLOBALS FOR THE PROJECTS READ FROM THE .PARAM FILE(S)
 
 //EXPERIMENT META
@@ -66,16 +69,17 @@ string str_reim_fname = "";
 string im_extraid = "";
 string re_extraid = "";
 string im_str_common, str_max_n_qnumber, str_l_qnumber, str_m_qnumber, str_initial_n, str_initial_l, str_initial_m;
-string im_fname_wfs[100];
+string im_fname_wfs[1000];
 string auto_fname_log, im_fname_log, re_fname_log, is_fname_log, ts_fname_log;
 string im_fname_potential, re_fname_observer, re_fname_wf, re_fname_vpotential;
 string re_fname_wfsnap, re_fname_wffinal, auto_fname, re_fname, ts_fname, is_fname;
+string is_fname_isurfv, ts_fname_psi, ts_fname_dpsidr;
 //Prefixes for different routines
 string auto_prefix("/auto");
 string re_prefix("/re");
 string im_prefix("/im");
-string tsurff_prefix("/ts");
 string isurfv_prefix("/is");
+string tsurff_prefix("/ts");
 //Init the default directories
 #ifdef SAVE_NEXT_TO_PROJECT
 string dir_name = create_dir_here("/dat");
@@ -258,7 +262,7 @@ void initCommonStrings()
   str_initial_m = to_string(dest_string);
 }
 
-void initFilenames()
+void initFilenames(std::string initWFname = "")
 {
   auto_fname = auto_prefix + im_extraid;
   auto_fname_log = auto_fname + string(".log");
@@ -269,13 +273,22 @@ void initFilenames()
   im_fname_potential = im_str_common + string("-potential.dat");
   for (int nr1 = 0; nr1 < max_n_number - l_qnumber; nr1++)
   {
-    // im_str_wfs = str_nuclear_charge + string("-n") + to_string(nr1 + l_qnumber + 1) + str_l_qnumber + string("-m") + to_string(m_qnumber);
     im_fname_wfs[nr1] = imMakeFileName(nr1 + l_qnumber + 1, l_qnumber, m_qnumber) + string("-wf.dat");
   }
-  //Common part of re im files for re routine
-  str_reim_fname = im_extraid + str_initial_n + str_initial_l + str_initial_m;
+  
   //Used to build the file name which we will load
-  re_fname_wf = im_prefix + str_reim_fname + string("-wf.dat");
+  if (initWFname == string(""))
+    re_fname_wf = im_prefix + im_extraid + str_initial_n + str_initial_l + str_initial_m + string("-wf.dat");
+  else
+    re_fname_wf = initWFname;
+  
+  str_reim_fname = im_extraid;
+#ifdef INCLUDE_STATE_INFO_IN_RE
+  if (re_superpositions)
+    str_reim_fname += "-superpos";
+  else  
+    str_reim_fname += str_initial_n + str_initial_l + str_initial_m;
+  #endif
 
   re_fname = re_prefix + re_extraid + str_reim_fname;
   is_fname = isurfv_prefix + re_extraid + str_reim_fname;
@@ -287,9 +300,14 @@ void initFilenames()
 
   re_fname_observer = re_fname + string("-observ.dat");
   re_fname_vpotential = re_fname + string("-vpotential.dat");
+  
   re_fname_wfsnap = re_fname;
   re_fname_wffinal = re_fname + string("-wf[final].dat");
+  is_fname_isurfv = is_fname + "-isurfv.dat";
+  ts_fname_psi = ts_fname +string("-psi.raw");
+  ts_fname_dpsidr = ts_fname + string("-dpsidr.raw");
 }
+
 
 void configVars()
 {
@@ -362,7 +380,6 @@ void logVecpot(const vecpot *fpx,
                const vecpot *fpy,
                const vecpot *fpz, int lno_of_ts)
 {
-  file_vpotential = fopen_with_check(dir_name + re_fname_vpotential, "w", verbose);
   for (long ts = 0; ts < lno_of_ts; ts++)
   {
     const double time = dt * double(ts);
@@ -636,9 +653,10 @@ int processOptions(int argc, char *argv[])
       {"conf_file", required_argument, nullptr, 'C'},
       //You can even change the default conf file (default-config.param)
       {"defu_file", required_argument, nullptr, 'U'},
+      {"re_continue", no_argument, nullptr, 'A'},
       {nullptr, no_argument, nullptr, 0}};
 
-  const char *const short_opts = "hve:Z:N:L:M:G:n:l:m:g:y:r:t:i:d:D:o:O:C:U:";
+  const char *const short_opts = "hvAe:Z:N:L:M:G:n:l:m:g:y:r:t:i:d:D:o:O:C:U:";
   //Check if new conf and default conf files were passed
 
   getCustomConfig(argc, argv, long_opts, short_opts);
@@ -754,6 +772,10 @@ int processOptions(int argc, char *argv[])
     case 'X':
       re_extraid = string(optarg);
       para->updateMergedParamField(string(long_opts[21].name), string(optarg), string("string"));
+      break;
+    case 'A':
+      logAdd("re_continue is turned on!\n");
+      re_continue = true;
       break;
     case ':':
       addCmdLineNotes("Possible problem ':' recieved");

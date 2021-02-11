@@ -76,7 +76,6 @@ int main(int argc, char **argv)
     // The Hamiltonian
     hamop hamilton;
     hamilton.init(g, always_zero2, always_zero2, always_zero2, std::ref(*scalarpotx), std::ref(*extended_imaginarypot));
-
     FILE *file_wf = fopen_with_check(dir_name + re_fname_wffinal, "r", verbose);
     // The wavefunction arrays
     wavefunction wf, wf_load;
@@ -93,7 +92,7 @@ int main(int argc, char **argv)
     staticpot.calculate_staticpot(g, hamilton);
 
     // Output files
-    ofstream file_res((dir_name + is_fname + "-isurfv.dat"));
+    ofstream file_res(dir_name+ is_fname_isurfv);
     file_res.precision(17);
 
     // Energy loop

@@ -47,9 +47,9 @@ std::string create_dir_here(std::string ffname)
   return "./" + ffname;
 }
 
-void copy_file(std::string ffname)
+void copy_file(std::string from, std::string to)
 {
-  system(("mkdir -p ." + ffname).c_str());
+  system(("cp -f " + from + " " + to).c_str());
 }
 
 #endif

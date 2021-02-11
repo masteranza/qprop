@@ -66,7 +66,10 @@ public:
     /// @param_ini Parameters for the initial state
     /// @param_prop Parameters for the propagation
     tsurffSaveWF(grid prop_g, string filename = "tsurff")
-        : psi(dir_name + ts_fname + string("-psi.raw"), std::ios::binary), dpsi_dr(dir_name + ts_fname + string("-dpsidr.raw"), std::ios::binary)
+        : psi(dir_name + ts_fname_psi, 
+        (re_continue?(std::ios::app | std::ios::binary):(std::ios::binary))), 
+        dpsi_dr(dir_name + ts_fname_dpsidr, 
+        (re_continue?(std::ios::app | std::ios::binary):(std::ios::binary)))
     {
         // qprop_dim = param_ini.getLong("qprop-dim");
         // delta_r = param_ini.getDouble("delta-r");
@@ -183,7 +186,7 @@ class tsurffSpectrum
 
 public:
     tsurffSpectrum(vx vecpotx, vy vecpoty, vz vecpotz, string filename = "tsurff")
-        : thetas_surff(101, 0.0), phis_surff(101, 0.0), k_values(100, 0.0), psi(dir_name + ts_fname + string("-psi.raw"), std::ios::binary), dpsi_dr(dir_name + ts_fname + string("-dpsidr.raw"), std::ios::binary), vecpot_x(vecpotx), vecpot_y(vecpoty), vecpot_z(vecpotz)
+        : thetas_surff(101, 0.0), phis_surff(101, 0.0), k_values(100, 0.0), psi(dir_name + ts_fname_psi, std::ios::binary), dpsi_dr(dir_name + ts_fname_dpsidr, std::ios::binary), vecpot_x(vecpotx), vecpot_y(vecpoty), vecpot_z(vecpotz)
     {
         // size of grid for ells and ms: ell^2 for dim 44 and ell for 34
         ell_m_grid_size = (qprop_dim == 34) ? re_l_grid_size : re_l_grid_size * re_l_grid_size;
@@ -256,7 +259,7 @@ public:
             start_t += entries_read;
             all_entries_read += entries_read;
             if (i_proc == 0)
-                logAdd("timestep %ld of %ld\n", all_entries_read, long(duration / dt) + 1);
+                logAdd("timestep %10d / %10ld\n", all_entries_read, long(duration / dt) + 1);
             offset += cache_size_t;
             // #ifdef HAVE_BOOST
             //         cout << "time for call of time_integration() per time step:  " << tim.elapsed()/double(entries_read) << " for proc " << i_proc << endl;
@@ -913,7 +916,7 @@ private:
 
         // ignoring first i_k_min lines
 
-        FILE *file = fopen((dir_name + is_fname + "-isurfv.dat").c_str(), "r");
+        FILE *file = fopen((dir_name + is_fname_isurfv).c_str(), "r");
 #ifndef EXTRA_TIME_TSURFF_ONLY
         {
             double energy, k;
@@ -1064,7 +1067,7 @@ private:
         isurfv_polar_dat.precision(17);
 
         // Ignoring first i_k_min lines
-        FILE *file = fopen((dir_name + is_fname + "-isurfv.dat").c_str(), "r");
+        FILE *file = fopen((dir_name + is_fname_isurfv).c_str(), "r");
 #ifndef EXTRA_TIME_TSURFF_ONLY
         {
             double energy, k;
@@ -1317,7 +1320,7 @@ private:
             if (i_proc == 0)
                 logAdd("Applying the i-SURFV part.\n");
             // FILE *file = fopen((const char *)(create_dir_in_home("/Results/" + exp_name) + "/" + "isurfv.dat"), "r");
-            FILE *file = fopen((dir_name + is_fname + "-isurfv.dat").c_str(), "r");
+            FILE *file = fopen((dir_name +is_fname_isurfv).c_str(), "r");
             double energy, k;
             long fscanf_status;
             double psi_re, psi_im, d_psi_dr_re, d_psi_dr_im;
@@ -1659,7 +1662,7 @@ private:
         {
             if (i_proc == 0)
                 logAdd("Applying the i-SURFV part.\n");
-            FILE *file = fopen((dir_name + is_fname + "-isurfv.dat").c_str(), "r");
+            FILE *file = fopen((dir_name + is_fname_isurfv).c_str(), "r");
             // FILE *file = fopen((const char *)(create_dir_in_home("/Results/" + exp_name) + "/" + "isurfv.dat"), "r");
             double energy, k;
             long fscanf_status;

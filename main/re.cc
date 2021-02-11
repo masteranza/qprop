@@ -50,9 +50,8 @@ int main(int argc, char **argv)
   staticpot.init(g_prop.size());
   staticpot.calculate_staticpot(g_prop, hamilton);
   wf.init(g_prop.size());
-  if (re_superpositions)
+  if (!re_continue && re_superpositions)
   {
-    logAdd("Loading %d superpositions\n", super_weights.size());
     for (int i = 0; i < super_positions.size(); i += 3)
     {
       long nn = super_positions[i];
@@ -70,18 +69,26 @@ int main(int argc, char **argv)
       wf.regrid_adding(g_prop, g_load, wf_load, weight);
       fclose(file_wf_ini);
     }
+    logAdd("Loaded %d superpositions\n", super_weights.size());
   }
   else
   {
     FILE *file_wf_ini = fopen_with_check(dir_name + re_fname_wf, "r", verbose);
-    g_load.set_dim(qprop_dim);
-    g_load.set_ngps(long(im_radial_grid_size / delta_r), l_qnumber + 1, 1);
-    g_load.set_delt(delta_r, 0.0, 0.0);
-    g_load.set_offs(0, 0, 0);
-    wf_load.init(g_load.size());
-    wf_load.init(g_load, file_wf_ini, 0, verbose);
-    wf.regrid(g_prop, g_load, wf_load);
+    if (re_continue)
+      wf.init(g_prop, file_wf_ini, 0, verbose);
+    else
+    {
+      g_load.set_dim(qprop_dim);
+      g_load.set_ngps(long(im_radial_grid_size / delta_r), l_qnumber + 1, 1);
+      g_load.set_delt(delta_r, 0.0, 0.0);
+      g_load.set_offs(0, 0, 0);
+      wf_load.init(g_load.size());
+      wf_load.init(g_load, file_wf_ini, 0, verbose);
+      wf.regrid(g_prop, g_load, wf_load);
+    }
+
     fclose(file_wf_ini);
+    logAdd("Loaded initial state: %s %s\n", re_fname_wf.c_str(), re_continue?"(continued)":"");
   }
   long lno_of_ts = long(duration / dt);
   I_p = real(wf.energy(0.0, g_prop, hamilton, 0, staticpot, nuclear_charge));
@@ -90,8 +97,11 @@ int main(int argc, char **argv)
   logSilent(g_prop);
 
   logAdd("Wavefunction norm on load: %le\n", wf.norm(g_prop));
-  wf.normalize(g_prop);
-  logAdd("Wavefunction upon normalization: %le\n", wf.norm(g_prop));
+  if (!re_continue)
+  { 
+    wf.normalize(g_prop);
+    logAdd("Wavefunction upon normalization: %le\n", wf.norm(g_prop));
+  }
 
 #ifdef PROJ_DATA
 // TODO: Is m serviced properly?
@@ -105,8 +115,10 @@ int main(int argc, char **argv)
   cplxd P[max_n_number * (max_n_number + 1) / 2]; //Array to hold projections
 #endif
   int indexx;
+  logAdd("Loading eigenvectors for projections:\n");
   for (int nr1 = 1; nr1 <= max_n_number; nr1++)
   {
+    logAdd("n=%2.d l=[ ", nr1);
 #ifdef PROJ_DATA_CONST_L
     int lr1 = l_qnumber;
 #else
@@ -114,7 +126,7 @@ int main(int argc, char **argv)
 #endif
     {
       indexx = (nr1 - 1) * (nr1) / 2 + lr1;
-      logAdd("Loading stationary state n=%d, l=%d m=%d\n", nr1, lr1, re_initial_m);
+      logAdd("%d ", lr1);
       g_stationary[indexx].set_dim(qprop_dim);
       g_stationary[indexx].set_ngps(long(im_radial_grid_size / delta_r), lr1 + 1, 1);
       g_stationary[indexx].set_delt(delta_r, 0.0, 0.0);
@@ -128,13 +140,17 @@ int main(int argc, char **argv)
       states_stationary[indexx].init(g_stationary[indexx], file_wf_stat, 0, 0);
       fclose(file_wf_stat);
     }
+
+    logAdd("]\n");
   }
 #endif
   if (vpotential_log)
-    file_vpotential = fopen_with_check(dir_name + re_fname_vpotential, "w", verbose);
-  logVecpot(vecpot_y, vecpot_y, vecpot_z, lno_of_ts);
+  {
+    file_vpotential = fopen_with_check(dir_name + re_fname_vpotential, (re_continue?"a":"w"), verbose);
+    logVecpot(vecpot_y, vecpot_y, vecpot_z, lno_of_ts);
+  }
   if (obser_log_interval)
-    file_observer = fopen_with_check(dir_name + re_fname_observer, "w", verbose);
+    file_observer = fopen_with_check(dir_name + re_fname_observer, (re_continue?"a":"w"), verbose);
   // ********************************************************
   // ***** real time propagation ****************************
   // ********************************************************

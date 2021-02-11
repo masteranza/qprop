@@ -219,7 +219,7 @@ parameterList::parameterList(string file_name, string defaults_name)
           }
           *it2 = parameter(name, type, value);
           _param_list.push_back(parameter(name, type, value));
-          paramNotes.push_back(ovr_string + name + " = " + value);
+          // paramNotes.push_back(ovr_string + name + " = " + value);
         }
       }
     }

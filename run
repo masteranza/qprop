@@ -19,9 +19,9 @@ mk=""
 upto=""
 from="im"
 # cores currently hold logical cores not physical, I know no good way to get physical cores on all platforms so we divide just in case
-[ $((logical_cores % 2)) -eq 0 ] && {
-    cores=$((logical_cores / 2))
-}
+# [ $((logical_cores % 2)) -eq 0 ] && {
+#     cores=$((logical_cores / 2))
+# }
 # set -e #test
 echo "${INFC}Number of cores = ${GREEN}$cores${INFC} (used for ./im routines, if ${GREEN}value of -np option > 0${INFC} then this value will be used instead).${NC}"
 err_str="${RED}Error:${INFC}"

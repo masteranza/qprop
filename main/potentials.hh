@@ -228,6 +228,7 @@ public:
   {
     return duration;
   };
+  
   virtual double get_Up() const
   {
 

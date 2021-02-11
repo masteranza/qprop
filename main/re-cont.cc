@@ -21,7 +21,7 @@ typedef std::unique_ptr<cplxd[]> cplxd_ptr;
 int main(int argc, char **argv)
 {
   clock_t t = clock();
-  print_banner("re-cont: continue Real time propagation");
+  print_banner("re-cont: continue real time propagation.\nReads the final wf obtained by ./re routine");
   int ind = processOptions(argc, argv);
   //OVERRIDE VARS WITH CUSTOM INIT (defined in config.hh)
   //Passing only unprocessed options
@@ -29,14 +29,15 @@ int main(int argc, char **argv)
   configVars();
   configCustomVars();
   if (re_log_interval)
-    file_log = fopen_with_check(dir_name + re_fname_log, "w", verbose);
+    file_log = fopen_with_check(dir_name + rec_fname_log, "w", verbose);
   configPulse();
   correctGridSize();
   configPotentials();
   logConfig();
+  
 
-  grid g_prop, g_load;
-  wavefunction staticpot, wf, wf_load;
+  grid g_prop;
+  wavefunction staticpot, wf;
   g_prop.set_dim(qprop_dim);
   g_prop.set_ngps(long(radial_grid_size / delta_r), re_l_grid_size, 1);
   g_prop.set_delt(delta_r);
@@ -50,39 +51,11 @@ int main(int argc, char **argv)
   staticpot.init(g_prop.size());
   staticpot.calculate_staticpot(g_prop, hamilton);
   wf.init(g_prop.size());
-  if (re_superpositions)
-  {
-    logAdd("Loading %d superpositions\n", super_weights.size());
-    for (int i = 0; i < super_positions.size(); i += 3)
-    {
-      long nn = super_positions[i];
-      long ll = super_positions[i + 1];
-      long mm = super_positions[i + 2];
-      double weight = super_weights[i / 3];
-      string str_stat_state = imMakeFileName(nn, ll, mm) + string("-wf.dat");
-      FILE *file_wf_ini = fopen_with_check(dir_name + str_stat_state, "r", verbose);
-      g_load.set_dim(qprop_dim);
-      g_load.set_ngps(long(im_radial_grid_size / delta_r), ll + 1, 1);
-      g_load.set_delt(delta_r, 0.0, 0.0);
-      g_load.set_offs(0, 0, 0);
-      wf_load.init(g_load.size());
-      wf_load.init(g_load, file_wf_ini, 0, verbose);
-      wf.regrid_adding(g_prop, g_load, wf_load, weight);
-      fclose(file_wf_ini);
-    }
-  }
-  else
-  {
-    FILE *file_wf_ini = fopen_with_check(dir_name + re_fname_wf, "r", verbose);
-    g_load.set_dim(qprop_dim);
-    g_load.set_ngps(long(im_radial_grid_size / delta_r), l_qnumber + 1, 1);
-    g_load.set_delt(delta_r, 0.0, 0.0);
-    g_load.set_offs(0, 0, 0);
-    wf_load.init(g_load.size());
-    wf_load.init(g_load, file_wf_ini, 0, verbose);
-    wf.regrid(g_prop, g_load, wf_load);
-    fclose(file_wf_ini);
-  }
+
+  FILE *file_wf_ini = fopen_with_check(dir_name + re_fname_wffinal, "r", verbose);
+  wf.init(g_prop, file_wf_ini, 0, verbose);
+  fclose(file_wf_ini);
+  
   long lno_of_ts = long(duration / dt);
   I_p = real(wf.energy(0.0, g_prop, hamilton, 0, staticpot, nuclear_charge));
   gamma_K = sqrt(I_p / 2.0 / U_p);
@@ -90,8 +63,8 @@ int main(int argc, char **argv)
   logSilent(g_prop);
 
   logAdd("Wavefunction norm on load: %le\n", wf.norm(g_prop));
-  wf.normalize(g_prop);
-  logAdd("Wavefunction upon normalization: %le\n", wf.norm(g_prop));
+  // wf.normalize(g_prop);
+  // logAdd("Wavefunction upon normalization: %le\n", wf.norm(g_prop));
 
 #ifdef PROJ_DATA
 // TODO: Is m serviced properly?
@@ -130,11 +103,17 @@ int main(int argc, char **argv)
     }
   }
 #endif
+
+  makeInitialFilesForReContinue(vpotential_log, obser_log_interval)
   if (vpotential_log)
-    file_vpotential = fopen_with_check(dir_name + re_fname_vpotential, "w", verbose);
-  logVecpot(vecpot_y, vecpot_y, vecpot_z, lno_of_ts);
+  {
+    file_vpotential = fopen_with_check(dir_name + rec_fname_vpotential, "a", verbose);
+    logVecpot(vecpot_y, vecpot_y, vecpot_z, lno_of_ts);
+  }
+
   if (obser_log_interval)
-    file_observer = fopen_with_check(dir_name + re_fname_observer, "w", verbose);
+    file_observer = fopen_with_check(dir_name + rec_fname_observer, "a", verbose);
+  
   // ********************************************************
   // ***** real time propagation ****************************
   // ********************************************************
@@ -235,7 +214,7 @@ int main(int argc, char **argv)
 
     if (wf_log_interval && ts % (wf_log_interval) == 0)
     {
-      fname_wf = re_fname_wfsnap + string("-wf[") + to_string(ts) + string("].dat");
+      fname_wf = rec_fname_wfsnap + string("-wf[") + to_string(ts) + string("].dat");
       logAdd("%7ld/%7ld -> saving wf snapshot to %s\n", ts, lno_of_ts, fname_wf.c_str());
       FILE *file_wf = fopen_with_check(dir_name + fname_wf, "w", verbose);
       wf.dump_to_file_sh(g_prop, file_wf, 1, verbose); // wf at timestep ts is saved
@@ -247,8 +226,8 @@ int main(int argc, char **argv)
 
   if (finalwf_log)
   {
-    logAdd("%7ld/%7ld -> saving final wf to %s\n", lno_of_ts, lno_of_ts, re_fname_wffinal.c_str());
-    FILE *file_wf = fopen_with_check(dir_name + re_fname_wffinal, "w", verbose);
+    logAdd("%7ld/%7ld -> saving final wf to %s\n", lno_of_ts, lno_of_ts, rec_fname_wffinal.c_str());
+    FILE *file_wf = fopen_with_check(dir_name + rec_fname_wffinal, "w", verbose);
     wf.dump_to_file_sh(g_prop, file_wf, 1, verbose); // final wf is saved
     fclose(file_wf);
   }

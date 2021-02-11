@@ -262,7 +262,7 @@ def plot2D(filename):
             X = Angles2D
             Y = R
         if log_scale == True:
-            cplt = ax.pcolor(X, Y, (W2D+1e-100),  # shading='auto',
+            cplt = ax.pcolor(X, Y, (W2D+1e-100), shading='auto',
                              norm=LogNorm(vmax*10**min_order, vmax), cmap=cmap)
         if log_scale == False:
             cplt = ax.pcolor(X, Y, (W2D+1e-100), shading='auto',
@@ -313,7 +313,7 @@ def plot2D(filename):
     cbar.ax.tick_params(labelsize=FONTSIZE)
     cbar.set_label(label="Diff. ioniz. probability (a.u.)", fontsize=FONTSIZE)
     # plt.show()
-    plt.savefig(path+fname(filename)+'.png')
+    plt.savefig(path+fname(filename)+'.pdf')
 
 
 def plot1D(filename):
@@ -344,7 +344,7 @@ def plot1D(filename):
     plt.xlabel(xlabel, fontsize=FONTSIZE)
     plt.ylabel(r"Diff. ioniz. probability (a.u.)", fontsize=FONTSIZE)
     # plt.show()
-    plt.savefig(path+fname(filename)+'.png')
+    plt.savefig(path+fname(filename)+'.pdf')
 
 
 def plotAngular():
@@ -377,7 +377,7 @@ def plotAngular():
         plt.xlabel(r"$\varphi$", fontsize=FONTSIZE)
     plt.ylabel("Angular distribution (arb.u.)", fontsize=FONTSIZE)
     # plt.show()
-    plt.savefig(path+fname(filename)+'.png')
+    plt.savefig(path+fname(filename)+'.pdf')
 
 
 for filename in isurfv_polar_files:
