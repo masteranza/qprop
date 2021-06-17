@@ -1,18 +1,68 @@
 {
     "configurations": [
         {
-            "name": "Mac",
+            "name": "x86",
             "includePath": [
                 "${workspaceFolder}/**",
-                "/opt/homebrew/include/**"
+                "/usr/local/include/*"
             ],
             "defines": [],
             "macFrameworkPath": [],
-            "compilerPath": "/opt/homebrew/bin/gcc-10",
+            "compilerPath": "/usr/local/bin/gcc-10",
+            "cStandard": "gnu17",
+            "cppStandard": "gnu++14",
+            "intelliSenseMode": "macos-gcc-x64",
+            "compilerArgs": [
+                "-DDIM=2",
+                "-DELEC=2",
+                "-DOMP",
+                "-DMPI"
+            ],
+            // "intelliSenseModeIsExplicit": true,
+            // "cStandardIsExplicit": true,
+            // "cppStandardIsExplicit": true,
+            // "compilerPathIsExplicit": true,
+            "browse": {
+                // "path": [
+                // "${workspaceFolder}/**",
+                // "/opt/homebrew/include/*",
+                // "/usr/local/include/*"
+                // ],
+                "limitSymbolsToIncludedHeaders": true
+            }
+            // ,"configurationProvider": "ms-vscode.makefile-tools"
+        },
+        {
+            "name": "M1",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "/opt/homebrew/include/*"
+            ],
+            "defines": [],
+            "macFrameworkPath": [],
+            "compilerPath": "/opt/homebrew/bin/g++-10",
             "cStandard": "gnu17",
             "cppStandard": "gnu++14",
             "intelliSenseMode": "macos-gcc-arm64",
-            "configurationProvider": "ms-vscode.makefile-tools"
+            "compilerArgs": [
+                "-DDIM=2",
+                "-DELEC=2",
+                "-DOMP",
+                "-DMPI"
+            ],
+            // "intelliSenseModeIsExplicit": true,
+            // "cStandardIsExplicit": true,
+            // "cppStandardIsExplicit": true,
+            // "compilerPathIsExplicit": true,
+            "browse": {
+                // "path": [],
+                // "${workspaceFolder}/**",
+                // "/opt/homebrew/include/*",
+                // "/usr/local/include/*"
+                // ],
+                "limitSymbolsToIncludedHeaders": true
+            }
+            // ,"configurationProvider": "ms-vscode.makefile-tools"
         }
     ],
     "version": 4
